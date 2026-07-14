@@ -19,6 +19,7 @@ import StudentQuizzes from './pages/student/StudentQuizzes';
 import QuizTake from './pages/student/QuizTake';
 import StudentResults from './pages/student/StudentResults';
 import EnrollmentDetail from './pages/admin/EnrollmentDetail';
+import AssignedCourses from './pages/teacher/AssignedCourses';
 
 function App() {
   return (
@@ -42,17 +43,17 @@ function App() {
               </ProtectedRoute>
             } />
             <Route path="/admin/courses" element={
-              <ProtectedRoute allowedRoles={['ADMIN']}>
+              <ProtectedRoute allowedRoles={['ADMIN', 'TEACHER']}>
                 <CourseManagement />
               </ProtectedRoute>
             } />
             <Route path="/admin/enrollments" element={
-              <ProtectedRoute allowedRoles={['ADMIN']}>
+              <ProtectedRoute allowedRoles={['ADMIN', 'TEACHER']}>
                 <EnrollmentManagement />
               </ProtectedRoute>
             } />
             <Route path="/admin/enrollments/:courseId" element={
-              <ProtectedRoute allowedRoles={['ADMIN']}>
+              <ProtectedRoute allowedRoles={['ADMIN', 'TEACHER']}>
                 <EnrollmentDetail />
               </ProtectedRoute>
             } />
@@ -61,6 +62,11 @@ function App() {
             <Route path="/teacher" element={
               <ProtectedRoute allowedRoles={['TEACHER']}>
                 <TeacherDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/teacher/assigned-courses" element={
+              <ProtectedRoute allowedRoles={['TEACHER']}>
+                <AssignedCourses />
               </ProtectedRoute>
             } />
             <Route path="/teacher/quizzes" element={

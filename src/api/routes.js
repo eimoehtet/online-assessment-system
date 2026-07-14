@@ -9,10 +9,13 @@ export const apiRoutes = {
   createUser: (userData) => apiClient.post("/users", userData),
   updateUser: (id, userData) => apiClient.patch(`/users/${id}`, userData),
   deleteUser: (id) => apiClient.delete(`/users/${id}`),
+  resetPassword: (id, newPassword) => apiClient.post(`/users/${id}/reset-password`, { newPassword }),
+  changePassword: (id, newPassword) => apiClient.post(`/users/${id}/change-password`, { newPassword }),
 
   // Courses
   getCourses: (params) => apiClient.get("/courses", { params }),
   getCourseById: (id) => apiClient.get(`/courses/${id}`),
+  getCourseByTeacherId: (teacherId) => apiClient.get(`/courses/teacher/${teacherId}`),
   createCourse: (courseData) => apiClient.post("/courses", courseData),
   updateCourse: (id, courseData) => apiClient.patch(`/courses/${id}`, courseData),
   deleteCourse: (id) => apiClient.delete(`/courses/${id}`),

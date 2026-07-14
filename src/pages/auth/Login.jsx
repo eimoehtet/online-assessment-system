@@ -21,6 +21,8 @@ const Login = () => {
     try {
       const user = await login(email, password);
       const from = location.state?.from?.pathname || `/${user.role.toLowerCase()}`;
+      localStorage.setItem('userId', user.id);
+      localStorage.setItem('userRole', user.role);
       navigate(from, { replace: true });
     } catch (err) {
       setError(err?.response?.data?.message || 'Invalid email or password');

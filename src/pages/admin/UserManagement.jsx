@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { apiRoutes } from '../../api/routes';
-import { Edit2, Trash2, UserPlus } from 'lucide-react';
+import { Edit2, Trash2, UserPlus, UserKeyIcon } from 'lucide-react';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState([false, null]);
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState([false, null]);
   const initialFormData = {
     name: '',
     email: '',
@@ -136,6 +137,9 @@ const UserManagement = () => {
                     <button onClick={() => handleDelete(user.id)} className="rounded-lg p-2 text-red-600 transition hover:bg-red-50 cursor-pointer" title="Delete user">
                       <Trash2 size={16} />
                     </button>
+                    <button onClick={() => setShowResetPasswordModal([true, user])} className="rounded-lg p-2 text-yellow-600 transition hover:bg-yellow-50 cursor-pointer" title="Change password">
+                      <UserKeyIcon size={16} />
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -198,6 +202,32 @@ const UserManagement = () => {
               <div className="flex gap-3 pt-4">
                 <button type="button" onClick={() => setShowModal([false, null])} className="flex-1 rounded-lg bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-300 cursor-pointer">Cancel</button>
                 <button type="submit" className="flex-1 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500 cursor-pointer">{showModal[1] ? 'Update User' : 'Create User'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {showResetPasswordModal[0] && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 p-4">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-slate-200 bg-white p-6 shadow-xl">
+            <h2 className="text-xl font-semibold text-slate-950">Change Password for {showResetPasswordModal[1].name}</h2>
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              try {
+                await apiRoutes.changePassword(showResetPasswordModal[1].id, formData.password);
+                setShowResetPasswordModal([false, null]);
+                setFormData(initialFormData);
+              } catch (err) {
+                setError(err?.response?.data?.message || 'Failed to change password');
+              }
+            }} className="mt-6 space-y-4">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">New Password</label>
+                <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="password" name="password" value={formData.password} onChange={handleInputChange} required />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button type="button" onClick={() => setShowResetPasswordModal([false, null])} className="flex-1 rounded-lg bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-300 cursor-pointer">Cancel</button>
+                <button type="submit" className="flex-1 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500 cursor-pointer">Change Password</button>
               </div>
             </form>
           </div>

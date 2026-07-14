@@ -15,7 +15,6 @@ const EnrollmentManagement = () => {
   const navigate = useNavigate();
 
   const handleCourseClick = (courseId) => {
-    console.log(`Navigating to enrollments for course ID: ${courseId}`);
     navigate(`/admin/enrollments/${courseId}`);
   };
 
