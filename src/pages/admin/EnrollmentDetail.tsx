@@ -192,33 +192,32 @@ const EnrollmentDetail = () => {
           {importing ? "Importing..." : "Import CSV"}
         </button>
       </div>
-      <div className="bg-white shadow rounded-lg p-6">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full mb-4">
-          <caption className="mb-2">Enrolled Students</caption>
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="px-4 py-2">No</th>
-              <th className="px-4 py-2">Student ID</th>
-              <th className="px-4 py-2">Name</th>
-              <th className="px-4 py-2">Gender</th>
-              <th className="px-4 py-2">D.O.B</th>
-              <th className="px-4 py-2">Email</th>
-              <th className="px-4 py-2">Phone</th>
-              <th className="px-4 py-2">Address</th>
+          <thead>
+            <tr className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <th className="px-4 py-3">No</th>
+              <th className="px-4 py-3">Student ID</th>
+              <th className="px-4 py-3">Name</th>
+              <th className="px-4 py-3">Gender</th>
+              <th className="px-4 py-3">D.O.B</th>
+              <th className="px-4 py-3">Email</th>
+              <th className="px-4 py-3">Phone</th>
+              <th className="px-4 py-3">Address</th>
             </tr>
           </thead>
 
-          <tbody>
+          <tbody className="divide-y divide-slate-100 text-sm text-slate-500">
             {enrollment?.map((enroll, index) => (
-              <tr key={enroll.id} className="border-b border-gray-200">
-                <td className="px-4 py-2">{index + 1}</td>
-                <td className="px-4 py-2">{enroll.student.student_id}</td>
-                <td className="px-4 py-2">{enroll.student.name}</td>
-                <td className="px-4 py-2">{enroll.student.gender}</td>
-                <td className="px-4 py-2">{enroll.student.date_of_birth}</td>
-                <td className="px-4 py-2">{enroll.student.email}</td>
-                <td className="px-4 py-2">{enroll.student.phone_number}</td>
-                <td className="px-4 py-2">{enroll.student.address}</td>
+              <tr key={enroll.id} className="hover:bg-slate-50">
+                <td className="whitespace-nowrap px-4 py-4 text-slate-950">{index + 1}</td>
+                <td className="whitespace-nowrap px-4 py-4 text-slate-950">{enroll.student.student_id}</td>
+                <td className="whitespace-nowrap px-4 py-4 text-slate-950">{enroll.student.name}</td>
+                <td className="whitespace-nowrap px-4 py-4 text-slate-950">{enroll.student.gender}</td>
+                <td className="whitespace-nowrap px-4 py-4 text-slate-950">{enroll.student.date_of_birth}</td>
+                <td className="whitespace-nowrap px-4 py-4 text-slate-950">{enroll.student.email}</td>
+                <td className="whitespace-nowrap px-4 py-4 text-slate-950">{enroll.student.phone_number}</td>
+                <td className="whitespace-nowrap px-4 py-4 text-slate-950">{enroll.student.address}</td>
               </tr>
             ))}
           </tbody>

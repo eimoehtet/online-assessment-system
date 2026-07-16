@@ -438,7 +438,7 @@ const QuizEditor = () => {
             <button
               type="button"
               onClick={addQuestion}
-              className="flex w-full cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-slate-300 p-8 font-bold text-slate-500 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+              className="flex w-full cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-slate-300 p-8 font-bold text-slate-500 transition hover:border-blue-300 hover:bg-red-50 hover:text-blue-700"
             >
               <Plus size={32} />
               Add Another Question

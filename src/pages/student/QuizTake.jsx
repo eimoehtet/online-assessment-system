@@ -258,7 +258,7 @@ const QuizTake = () => {
                   key={option.id}
                   className={`flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition ${
                     answers[currentQuestion.id] === option.option_text
-                      ? 'border-blue-500 bg-blue-50'
+                      ? 'border-blue-500 bg-red-50'
                       : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                   }`}
                 >

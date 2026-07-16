@@ -19,23 +19,30 @@ const MainLayout = () => {
     navigate('/login');
   };
 
+  const viewProfile = () => {
+    navigate('/profile');
+  };
+
   const navItems = {
     ADMIN: [
       { label: 'Dashboard', path: '/admin', icon: <LayoutDashboard size={20} /> },
       { label: 'Users', path: '/admin/users', icon: <Users size={20} /> },
       { label: 'Courses', path: '/admin/courses', icon: <BookOpen size={20} /> },
-      { label: 'Enrollments', path: '/admin/enrollments', icon: <Users size={20} /> },
+      { label: 'Course Enrollments', path: '/admin/enrollments', icon: <Users size={20} /> },
+      { label: 'Change Password', path: '/change-password', icon: <User size={20} /> },
     ],
     TEACHER: [
       { label: 'Dashboard', path: '/teacher', icon: <LayoutDashboard size={20} /> },
       { label: 'Assigned Courses', path: '/teacher/assigned-courses', icon: <BookOpen size={20} /> },
       { label: 'Quizzes', path: '/teacher/quizzes', icon: <FileText size={20} /> },
       { label: 'Submissions', path: '/teacher/submissions', icon: <CheckSquare size={20} /> },
+      { label: 'Change Password', path: '/change-password', icon: <User size={20} /> },
     ],
     STUDENT: [
       { label: 'Dashboard', path: '/student', icon: <LayoutDashboard size={20} /> },
       { label: 'My Courses', path: '/student/courses', icon: <BookOpen size={20} /> },
       { label: 'My Results', path: '/student/results', icon: <CheckSquare size={20} /> },
+      { label: 'Change Password', path: '/change-password', icon: <User size={20} /> },
     ],
   };
 
@@ -46,10 +53,10 @@ const MainLayout = () => {
       <aside className="fixed inset-x-0 top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 shadow-sm md:sticky md:inset-auto md:top-0 md:h-screen md:w-64 md:shrink-0 md:flex-col md:items-stretch md:border-b-0 md:border-r md:px-5 md:py-6">
         <div className="min-w-0 md:mb-8">
           <div className="flex min-w-0 items-center gap-2 text-sm text-slate-600">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-red-50 text-blue-700">
               <User size={16} />
             </span>
-            <div className="min-w-0">
+            <div className="min-w-0 cursor-pointer flex flex-col justify-center" onClick={viewProfile}>
               <span className="block truncate font-medium text-slate-900">{user?.name}</span>
               <small className="block text-xs uppercase tracking-wide text-slate-500">{user?.role}</small>
             </div>
@@ -60,7 +67,7 @@ const MainLayout = () => {
             <Link
               key={item.path}
               to={item.path}
-              className="flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-blue-50 hover:text-blue-700 md:px-4 md:py-3"
+              className="flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-red-50 hover:text-blue-700 md:px-4 md:py-3"
             >
               {item.icon}
               <span className="hidden sm:inline">{item.label}</span>

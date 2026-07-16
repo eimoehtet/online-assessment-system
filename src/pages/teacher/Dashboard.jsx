@@ -33,7 +33,7 @@ const TeacherDashboard = () => {
 
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         <div className="flex items-center gap-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="rounded-xl bg-blue-50 p-4 text-blue-700">
+          <div className="rounded-xl bg-red-50 p-4 text-blue-700">
             <FileText size={32} />
           </div>
           <div>
@@ -52,7 +52,7 @@ const TeacherDashboard = () => {
           </div>
         </div>
 
-        <Link to="/teacher/quizzes/new" className="flex items-center gap-5 rounded-xl border-2 border-dashed border-slate-300 bg-white/50 p-6 text-slate-950 transition hover:border-blue-300 hover:bg-blue-50/50">
+        <Link to="/teacher/quizzes/new" className="flex items-center gap-5 rounded-xl border-2 border-dashed border-slate-300 bg-white/50 p-6 text-slate-950 transition hover:border-blue-300 hover:bg-red-50/50">
           <div className="rounded-xl bg-slate-100 p-4 text-blue-700">
             <PlusCircle size={32} />
           </div>

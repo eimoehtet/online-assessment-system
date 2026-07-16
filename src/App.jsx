@@ -20,6 +20,8 @@ import QuizTake from './pages/student/QuizTake';
 import StudentResults from './pages/student/StudentResults';
 import EnrollmentDetail from './pages/admin/EnrollmentDetail';
 import AssignedCourses from './pages/teacher/AssignedCourses';
+import UserProfile from './pages/UserProfile';
+import ChangePasswordForm from './pages/ChangePasswordForm';
 
 function App() {
   return (
@@ -57,6 +59,19 @@ function App() {
                 <EnrollmentDetail />
               </ProtectedRoute>
             } />
+
+
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <UserProfile />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/change-password" element={
+            <ProtectedRoute>
+              <ChangePasswordForm />
+            </ProtectedRoute>
+          } />
 
             {/* Teacher Routes */}
             <Route path="/teacher" element={

@@ -20,11 +20,16 @@ const UserManagement = () => {
     address: ''
   };
   const [formData, setFormData] = useState(initialFormData);
+  const [totalPages, setTotalPages] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  async function fetchUsers() {
+
+  async function fetchUsers(page = 1) {
     try {
-      const response = await apiRoutes.getUsers();
+      const response = await apiRoutes.getUsers({ page });
       setUsers(response.data.data || []);
+      setTotalPages(response.data.meta.totalPages || 1);
+      setCurrentPage(response.data.meta.page || 1);
     } catch {
       setError('Failed to fetch users');
     } finally {
@@ -32,13 +37,17 @@ const UserManagement = () => {
     }
   }
 
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    fetchUsers(page);
+  };
+
   useEffect(() => {
     fetchUsers();
   }, []);
 
   useEffect(() => {
     if (showModal[0] && showModal[1]) {
-      console.log('Editing user:', showModal[1]);
       setFormData({
         name: showModal[1].name,
         email: showModal[1].email,
@@ -122,7 +131,7 @@ const UserManagement = () => {
                     user.role === 'ADMIN'
                       ? 'bg-emerald-50 text-emerald-700'
                       : user.role === 'TEACHER'
-                        ? 'bg-blue-50 text-blue-700'
+                        ? 'bg-red-50 text-blue-700'
                         : 'bg-amber-50 text-amber-700'
                   }`}>
                     {user.role}
@@ -131,7 +140,7 @@ const UserManagement = () => {
                 <td className="whitespace-nowrap px-4 py-4 text-slate-600">{user.student_id || '-'}</td>
                 <td className="whitespace-nowrap px-4 py-4">
                   <div className="flex gap-2">
-                    <button onClick={() => setShowModal([true, user])} className="rounded-lg p-2 text-blue-600 transition hover:bg-blue-50 cursor-pointer" title="Edit user">
+                    <button onClick={() => setShowModal([true, user])} className="rounded-lg p-2 text-blue-600 transition hover:bg-red-50 cursor-pointer" title="Edit user">
                       <Edit2 size={16} />
                     </button>
                     <button onClick={() => handleDelete(user.id)} className="rounded-lg p-2 text-red-600 transition hover:bg-red-50 cursor-pointer" title="Delete user">
@@ -146,6 +155,21 @@ const UserManagement = () => {
             ))}
           </tbody>
         </table>
+        {/* Numbers Pagination Controls */}
+        <div className="flex justify-center gap-2 p-4">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+            <button
+              key={page}
+              onClick={() => handlePageChange(page)}
+              disabled={currentPage === page}
+              className={`rounded-lg px-3 py-1 text-sm font-medium transition ${
+                page === currentPage ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+              }`}
+            >
+              {page}
+            </button>
+          ))}
+        </div>
         </div>
       </div>
 
@@ -184,7 +208,7 @@ const UserManagement = () => {
                 </select>
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">Student ID (Optional)</label>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Student / Teacher ID </label>
                 <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="text" name="student_id" value={formData.student_id} onChange={handleInputChange} />
               </div>
               <div>
@@ -214,7 +238,7 @@ const UserManagement = () => {
             <form onSubmit={async (e) => {
               e.preventDefault();
               try {
-                await apiRoutes.changePassword(showResetPasswordModal[1].id, formData.password);
+                await apiRoutes.resetPassword(showResetPasswordModal[1].id, formData.password);
                 setShowResetPasswordModal([false, null]);
                 setFormData(initialFormData);
               } catch (err) {

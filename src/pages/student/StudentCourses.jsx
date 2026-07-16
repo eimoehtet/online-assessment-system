@@ -43,7 +43,7 @@ const StudentCourses = () => {
         ) : (
           enrollments.map(enrollment => (
             <div key={enrollment.id} className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="w-fit rounded-lg bg-blue-50 p-3 text-blue-700">
+              <div className="w-fit rounded-lg bg-red-50 p-3 text-blue-700">
                 <BookOpen size={24} />
               </div>
               <div>

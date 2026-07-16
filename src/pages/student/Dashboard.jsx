@@ -33,7 +33,7 @@ const StudentDashboard = () => {
 
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         <div className="flex items-center gap-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="rounded-xl bg-blue-50 p-4 text-blue-700">
+          <div className="rounded-xl bg-red-50 p-4 text-blue-700">
             <BookOpen size={32} />
           </div>
           <div>

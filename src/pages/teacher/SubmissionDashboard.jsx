@@ -234,7 +234,7 @@ const SubmissionDashboard = () => {
                     <tr key={submission.id} className="hover:bg-slate-50">
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
-                          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+                          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-red-50 text-blue-700">
                             <User size={16} />
                           </span>
                           <div>

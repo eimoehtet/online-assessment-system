@@ -20,10 +20,10 @@ const CourseManagement = () => {
     try {
       const [coursesRes, usersRes] = await Promise.all([
         apiRoutes.getCourses(),
-        apiRoutes.getUsers()
+        apiRoutes.getTeachers()
       ]);
       setCourses(coursesRes.data.data || []);
-      const allTeachers = (usersRes.data.data || []).filter(u => u.role === 'TEACHER');
+      const allTeachers = (usersRes.data.data || []);
       setTeachers(allTeachers);
     } catch {
       setError('Failed to fetch data');
@@ -132,7 +132,7 @@ const CourseManagement = () => {
                   </td>
                   <td className="whitespace-nowrap px-4 py-4">
                     <div className="flex gap-2">
-                      <button onClick={() => openEditModal(course)} className="rounded-lg p-2 text-blue-600 transition hover:bg-blue-50 cursor-pointer" title="Edit course">
+                      <button onClick={() => openEditModal(course)} className="rounded-lg p-2 text-blue-600 transition hover:bg-red-50 cursor-pointer" title="Edit course">
                         <Edit2 size={16} />
                       </button>
                       <button onClick={() => handleDelete(course.id)} className="rounded-lg p-2 text-red-600 transition hover:bg-red-50 cursor-pointer" title="Delete course">

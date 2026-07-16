@@ -6,11 +6,12 @@ export const apiRoutes = {
 
   // Users (Admin)
   getUsers: (params) => apiClient.get("/users", { params }),
+  getTeachers: () => apiClient.get("/users/teachers"),
   createUser: (userData) => apiClient.post("/users", userData),
   updateUser: (id, userData) => apiClient.patch(`/users/${id}`, userData),
   deleteUser: (id) => apiClient.delete(`/users/${id}`),
   resetPassword: (id, newPassword) => apiClient.post(`/users/${id}/reset-password`, { newPassword }),
-  changePassword: (id, newPassword) => apiClient.post(`/users/${id}/change-password`, { newPassword }),
+  changePassword: (id, currentPassword, newPassword) => apiClient.post(`/users/${id}/change-password`, { currentPassword, newPassword }),
 
   // Courses
   getCourses: (params) => apiClient.get("/courses", { params }),
