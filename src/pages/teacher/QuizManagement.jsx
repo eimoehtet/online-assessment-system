@@ -64,7 +64,7 @@ const QuizManagement = () => {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <span className="text-xs font-bold uppercase tracking-wide text-blue-600">
-                    {quiz.course?.code}
+                    {quiz.course?.name}
                   </span>
                   <h3 className="mt-1 font-semibold text-slate-950">{quiz.title}</h3>
                 </div>

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { apiRoutes } from '../../api/routes';
-import { Edit2, Trash2, UserPlus, UserKeyIcon } from 'lucide-react';
+import { SquarePen, Trash2, UserPlus, KeyIcon } from 'lucide-react';
 
-const UserManagement = () => {
-  const [users, setUsers] = useState([]);
+const TeachersManagement = () => {
+  const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState([false, null]);
@@ -12,9 +12,8 @@ const UserManagement = () => {
     name: '',
     email: '',
     password: '',
-    role: 'STUDENT',
+    role: 'TEACHER',
     gender: null,
-    student_id: '',
     phone_number: '',
     date_of_birth: '',
     address: ''
@@ -22,16 +21,17 @@ const UserManagement = () => {
   const [formData, setFormData] = useState(initialFormData);
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
+  const [nameSearch, setNameSearch] = useState("");
 
 
-  async function fetchUsers(page = 1) {
+  async function fetchTeachers(page = 1) {
     try {
-      const response = await apiRoutes.getUsers({ page });
-      setUsers(response.data.data || []);
+      const response = await apiRoutes.getTeachers({ page });
+      setTeachers(response.data.data || []);
       setTotalPages(response.data.meta.totalPages || 1);
       setCurrentPage(response.data.meta.page || 1);
     } catch {
-      setError('Failed to fetch users');
+      setError('Failed to fetch Teachers');
     } finally {
       setLoading(false);
     }
@@ -39,11 +39,11 @@ const UserManagement = () => {
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
-    fetchUsers(page);
+    fetchTeachers(page);
   };
 
   useEffect(() => {
-    fetchUsers();
+    fetchTeachers();
   }, []);
 
   useEffect(() => {
@@ -53,7 +53,6 @@ const UserManagement = () => {
         email: showModal[1].email,
         role: showModal[1].role,
         gender: showModal[1].gender || null,
-        student_id: showModal[1].student_id || '',
         phone_number: showModal[1].phone_number || '',
         date_of_birth: showModal[1].date_of_birth ? showModal[1].date_of_birth.split('T')[0] : '',
         address: showModal[1].address || ''
@@ -77,7 +76,7 @@ const UserManagement = () => {
         await apiRoutes.createUser(formData);
       }
       setShowModal([false, null]);
-      fetchUsers();
+      fetchTeachers();
       setFormData(initialFormData);
     } catch (err) {
       setError(err?.response?.data?.message || 'Failed to save user');
@@ -88,24 +87,40 @@ const UserManagement = () => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
         await apiRoutes.deleteUser(id);
-        fetchUsers();
+        fetchTeachers();
       } catch {
         alert('Failed to delete user');
       }
     }
   };
 
-  if (loading) return <div className="text-sm text-slate-600">Loading users...</div>;
+  if (loading) return <div className="text-sm text-slate-600">Loading Teachers...</div>;
+
+    const filteredTeachers = teachers?.filter((teacher) => {
+    const nameMatch = teacher.name
+      .toLowerCase()
+      .includes(nameSearch.toLowerCase());
+    return nameMatch;
+  });
 
   return (
     <div className="mx-auto max-w-7xl">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-950">User Management</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-950">Teacher Management</h1>
         <button onClick={() => setShowModal([true, null])} className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500 cursor-pointer">
           <UserPlus size={18} />
-          Add User
+          Add Teacher
         </button>
       </div>
+      <div className="flex items-center space-x-4 mb-4 text-sm text-slate-600">
+          <input
+            type="text"
+            placeholder="Search by name..."
+            value={nameSearch}
+            onChange={(e) => setNameSearch(e.target.value)}
+            className="border border-gray-300 p-2 rounded-md w-[250px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
 
       {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
 
@@ -114,6 +129,7 @@ const UserManagement = () => {
         <table className="min-w-full divide-y divide-slate-200">
           <thead>
             <tr className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <th className="px-4 py-3">No</th>
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Role</th>
@@ -122,32 +138,33 @@ const UserManagement = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 text-sm">
-            {users.map(user => (
-              <tr key={user.id} className="hover:bg-slate-50">
-                <td className="whitespace-nowrap px-4 py-4 font-medium text-slate-950">{user.name}</td>
-                <td className="whitespace-nowrap px-4 py-4 text-slate-600">{user.email}</td>
+            {filteredTeachers.map(teacher => (
+              <tr key={teacher.id} className="hover:bg-slate-50">
+                <td className="whitespace-nowrap px-4 py-4 text-slate-600">{teachers.indexOf(teacher) + 1}</td>
+                <td className="whitespace-nowrap px-4 py-4 font-medium text-slate-950">{teacher.name}</td>
+                <td className="whitespace-nowrap px-4 py-4 text-slate-600">{teacher.email}</td>
                 <td className="whitespace-nowrap px-4 py-4">
                   <span className={`rounded-md px-2 py-1 text-xs font-bold ${
-                    user.role === 'ADMIN'
+                    teacher.role === 'ADMIN'
                       ? 'bg-emerald-50 text-emerald-700'
-                      : user.role === 'TEACHER'
+                      : teacher.role === 'TEACHER'
                         ? 'bg-red-50 text-blue-700'
                         : 'bg-amber-50 text-amber-700'
                   }`}>
-                    {user.role}
+                    {teacher.role}
                   </span>
                 </td>
-                <td className="whitespace-nowrap px-4 py-4 text-slate-600">{user.student_id || '-'}</td>
+                <td className="whitespace-nowrap px-4 py-4 text-slate-600">{teacher.student_id || '-'}</td>
                 <td className="whitespace-nowrap px-4 py-4">
                   <div className="flex gap-2">
-                    <button onClick={() => setShowModal([true, user])} className="rounded-lg p-2 text-blue-600 transition hover:bg-red-50 cursor-pointer" title="Edit user">
-                      <Edit2 size={16} />
+                    <button onClick={() => setShowModal([true, teacher])} className="rounded-lg p-2 text-yellow-600 transition hover:bg-yellow-50 cursor-pointer" title="Edit user">
+                      <SquarePen size={16} />
                     </button>
-                    <button onClick={() => handleDelete(user.id)} className="rounded-lg p-2 text-red-600 transition hover:bg-red-50 cursor-pointer" title="Delete user">
+                    <button onClick={() => handleDelete(teacher.id)} className="rounded-lg p-2 text-red-600 transition hover:bg-red-50 cursor-pointer" title="Delete user">
                       <Trash2 size={16} />
                     </button>
-                    <button onClick={() => setShowResetPasswordModal([true, user])} className="rounded-lg p-2 text-yellow-600 transition hover:bg-yellow-50 cursor-pointer" title="Change password">
-                      <UserKeyIcon size={16} />
+                    <button onClick={() => setShowResetPasswordModal([true, teacher])} className="rounded-lg p-2 text-yellow-600 transition hover:bg-yellow-50 cursor-pointer" title="Change password">
+                      <KeyIcon size={16} />
                     </button>
                   </div>
                 </td>
@@ -204,7 +221,6 @@ const UserManagement = () => {
                   <option value="">Select Gender</option>
                   <option value="MALE">Male</option>
                   <option value="FEMALE">Female</option>
-                  <option value="OTHER">Other</option>
                 </select>
               </div>
               <div>
@@ -234,7 +250,7 @@ const UserManagement = () => {
       {showResetPasswordModal[0] && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 p-4">
           <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-slate-200 bg-white p-6 shadow-xl">
-            <h2 className="text-xl font-semibold text-slate-950">Change Password for {showResetPasswordModal[1].name}</h2>
+            <h2 className="text-xl font-semibold text-slate-950">Reset Password for {showResetPasswordModal[1].name}</h2>
             <form onSubmit={async (e) => {
               e.preventDefault();
               try {
@@ -242,7 +258,7 @@ const UserManagement = () => {
                 setShowResetPasswordModal([false, null]);
                 setFormData(initialFormData);
               } catch (err) {
-                setError(err?.response?.data?.message || 'Failed to change password');
+                setError(err?.response?.data?.message || 'Failed to reset password');
               }
             }} className="mt-6 space-y-4">
               <div>
@@ -251,7 +267,7 @@ const UserManagement = () => {
               </div>
               <div className="flex gap-3 pt-4">
                 <button type="button" onClick={() => setShowResetPasswordModal([false, null])} className="flex-1 rounded-lg bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-300 cursor-pointer">Cancel</button>
-                <button type="submit" className="flex-1 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500 cursor-pointer">Change Password</button>
+                <button type="submit" className="flex-1 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500 cursor-pointer">Reset Password</button>
               </div>
             </form>
           </div>
@@ -261,4 +277,4 @@ const UserManagement = () => {
   );
 };
 
-export default UserManagement;
+export default TeachersManagement;

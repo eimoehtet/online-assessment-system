@@ -26,6 +26,8 @@ const QuizTake = () => {
   // Behavioral tracking refs
   const questionStartTime = useRef(0);
   const timeoutSubmitStarted = useRef(false);
+  const answerSaveTimers = useRef(new Map());
+  const answerSaveQueues = useRef(new Map());
 
   const currentQuestion = questions[currentIndex];
 
@@ -129,18 +131,25 @@ const QuizTake = () => {
     };
   }, [logBehavior]);
 
-  const handleAnswerChange = async (questionId, value) => {
-    setAnswers(prev => ({ ...prev, [questionId]: value }));
-    
-    // Auto-save answer to backend
-    try {
-      await apiRoutes.submitAnswer(submissionId, {
+  const saveAnswer = useCallback((questionId, value) => {
+    const previousSave = answerSaveQueues.current.get(questionId) || Promise.resolve();
+    const request = previousSave.catch(() => null).then(() => apiRoutes.submitAnswer(submissionId, {
         question_id: questionId,
         student_answer: value
-      });
-    } catch {
-      console.error('Failed to auto-save answer');
-    }
+      }));
+    answerSaveQueues.current.set(questionId, request);
+    return request;
+  }, [submissionId]);
+
+  const handleAnswerChange = (questionId, value) => {
+    setAnswers(prev => ({ ...prev, [questionId]: value }));
+
+    // Debouncing prevents older keystroke requests from overwriting the latest text.
+    clearTimeout(answerSaveTimers.current.get(questionId));
+    answerSaveTimers.current.set(questionId, setTimeout(() => {
+      answerSaveTimers.current.delete(questionId);
+      saveAnswer(questionId, value).catch(() => console.error('Failed to save answer'));
+    }, 400));
   };
 
   const nextQuestion = () => {
@@ -166,18 +175,27 @@ const QuizTake = () => {
     setIsSubmitting(true);
     
     try {
+      // Flush the latest local values before locking the submission.
+      answerSaveTimers.current.forEach((timer) => clearTimeout(timer));
+      answerSaveTimers.current.clear();
       // Final time log
       const timeSpent = Math.floor((Date.now() - questionStartTime.current) / 1000);
       await logBehavior('TIME_SPENT_PER_Q', { seconds: timeSpent });
+      await apiRoutes.finishSubmission(submissionId, {
+        answers: Object.entries(answers).map(([question_id, student_answer]) => ({
+          question_id: Number(question_id),
+          student_answer,
+        })),
+      });
       
-      alert('Quiz submitted successfully!');
+      alert('Quiz submitted successfully. Your score will be available after teacher review.');
       navigate('/student/results');
-    } catch {
-      alert('Failed to complete submission');
+    } catch (err) {
+      alert(err?.response?.data?.message || 'Failed to complete submission');
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSubmitting, logBehavior, navigate]);
+  }, [answers, isSubmitting, logBehavior, navigate, submissionId]);
 
   // Timer Effect
   useEffect(() => {

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import ppiuLogo from '../../assets/ppiu-logo.png';
+import { Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -33,7 +34,7 @@ const Login = () => {
 
   return (
     <div className="grid min-h-screen place-items-center bg-slate-50 px-4 py-10">
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+      <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
         <div className="mb-6">
           <img src={ppiuLogo} alt="Logo" className="mx-auto h-18 w-auto" />
         </div>
@@ -52,7 +53,7 @@ const Login = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+              className="w-full text-sm rounded-lg border border-slate-300 px-3 py-2 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
               required
             />
           </div>
@@ -64,13 +65,30 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
               required
             />
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              onClick={() => {
+                const passwordInput = document.getElementById('password');
+                if (passwordInput.type === 'password') {
+                  passwordInput.type = 'text';
+                } else {
+                  passwordInput.type = 'password';
+                }
+              }}
+            >
+              {document.getElementById('password')?.type === 'password' ? <Eye size={18} /> : <EyeOff size={18} />}
+            </button>
+          </div>
+          <div className="text-right">
+            <a href="/forgot-password" className="text-xs text-slate-400 hover:text-slate-600 hover:underline">Forgot password?</a>
           </div>
           <button
             type="submit"
-            className="w-full rounded-lg bg-red-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+            className="w-full text-sm rounded-lg bg-red-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
             disabled={loading}
           >
             {loading ? 'Logging in...' : 'Log In'}

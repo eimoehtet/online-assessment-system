@@ -36,7 +36,7 @@ const ChangePasswordForm = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
+    <div className="max-w-md mt-10 p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-2xl font-semibold mb-4">Change Password</h2>
       {/* {error && <div className="mb-4 text-red-600">{error}</div>} */}
       {successMessage && <div className="mb-4 text-blue-600">{successMessage}</div>}
@@ -76,7 +76,7 @@ const ChangePasswordForm = () => {
         </div>
         <button
           type="submit"
-          className="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition"
+          className="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-500 transition cursor-pointer"
         >
           Change Password
         </button>

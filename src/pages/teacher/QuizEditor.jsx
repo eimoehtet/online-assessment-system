@@ -22,6 +22,7 @@ const QuizEditor = () => {
   const [courses, setCourses] = useState([]);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const teacher_id = JSON.parse(localStorage.getItem('userId'));
 
   // Unified state for Quiz and Questions
   const [formData, setFormData] = useState({
@@ -187,6 +188,7 @@ const QuizEditor = () => {
       const quizPayload = {
         title: formData.title,
         course_id: parseInt(formData.course_id),
+        teacher_id,
         status: formData.status,
         allowed_attempts: parseInt(formData.allowed_attempts),
         time_limit: new Date(formData.time_limit).toISOString()

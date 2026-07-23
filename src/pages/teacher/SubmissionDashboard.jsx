@@ -29,6 +29,8 @@ const SubmissionDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [detailError, setDetailError] = useState('');
+  const [gradingAnswerId, setGradingAnswerId] = useState(null);
+  const [reviewActionLoading, setReviewActionLoading] = useState(false);
   const [quizFilter, setQuizFilter] = useState('ALL');
   const [riskFilter, setRiskFilter] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
@@ -121,6 +123,57 @@ const SubmissionDashboard = () => {
       setDetailError('Failed to load submission answers');
     } finally {
       setSelectedLoading(false);
+    }
+  };
+
+  const syncSubmission = (updated) => {
+    setSelectedSubmission((current) => current ? { ...current, ...updated } : current);
+    setSubmissions((current) => current.map((item) => item.id === updated.id ? { ...item, ...updated } : item));
+  };
+
+  const saveManualScore = async (answer, value) => {
+    const score = Number(value);
+    if (!Number.isInteger(score) || score < 0 || score > (answer.question?.points ?? 0)) {
+      setDetailError(`Enter a whole number from 0 to ${answer.question?.points ?? 0}.`);
+      return;
+    }
+    setGradingAnswerId(answer.id);
+    setDetailError('');
+    try {
+      const res = await apiRoutes.gradeSubmissionAnswer(selectedSubmission.id, answer.id, { teacher_points_awarded: score });
+      setSelectedAnswers((current) => current.map((item) => item.id === answer.id ? res.data : item));
+      const details = await apiRoutes.getSubmissionById(selectedSubmission.id);
+      syncSubmission(details.data);
+    } catch (err) {
+      setDetailError(err?.response?.data?.message || 'Failed to save manual score.');
+    } finally {
+      setGradingAnswerId(null);
+    }
+  };
+
+  const completeReview = async () => {
+    setReviewActionLoading(true);
+    setDetailError('');
+    try {
+      const res = await apiRoutes.completeSubmissionReview(selectedSubmission.id);
+      syncSubmission(res.data);
+    } catch (err) {
+      setDetailError(err?.response?.data?.message || 'Failed to complete review.');
+    } finally {
+      setReviewActionLoading(false);
+    }
+  };
+
+  const releaseScore = async () => {
+    setReviewActionLoading(true);
+    setDetailError('');
+    try {
+      const res = await apiRoutes.releaseSubmissionScore(selectedSubmission.id);
+      syncSubmission(res.data);
+    } catch (err) {
+      setDetailError(err?.response?.data?.message || 'Failed to release score.');
+    } finally {
+      setReviewActionLoading(false);
     }
   };
 
@@ -222,6 +275,7 @@ const SubmissionDashboard = () => {
                   <th className="px-4 py-3 font-semibold">Quiz</th>
                   <th className="px-4 py-3 font-semibold">Submitted</th>
                   <th className="px-4 py-3 font-semibold">Score</th>
+                  <th className="px-4 py-3 font-semibold">Review</th>
                   <th className="px-4 py-3 font-semibold">Risk</th>
                   <th className="px-4 py-3 text-right font-semibold">Action</th>
                 </tr>
@@ -252,9 +306,10 @@ const SubmissionDashboard = () => {
                       <td className="px-4 py-4 text-slate-600">{format(new Date(submission.submitted_at), 'PPp')}</td>
                       <td className="px-4 py-4">
                         <span className="font-semibold text-slate-950">
-                          {submission.total_score !== null ? `${submission.total_score} pts` : 'Pending'}
+                          {submission.status === 'RELEASED' ? `${submission.total_score} pts` : 'Hidden'}
                         </span>
                       </td>
+                      <td className="px-4 py-4"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">{submission.status?.replaceAll('_', ' ') || 'IN PROGRESS'}</span></td>
                       <td className="px-4 py-4">
                         <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getRiskStyle(riskLevel)}`}>
                           {riskLevel}
@@ -301,8 +356,9 @@ const SubmissionDashboard = () => {
                 <div className="rounded-lg bg-slate-50 p-4">
                   <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Score</div>
                   <div className="mt-1 text-xl font-bold text-slate-950">
-                    {selectedSubmission.total_score !== null ? `${selectedSubmission.total_score} pts` : 'Pending'}
+                    {selectedSubmission.status === 'RELEASED' ? `${selectedSubmission.total_score} pts` : `${(selectedSubmission.auto_score || 0) + (selectedSubmission.manual_score || 0)} pts`}
                   </div>
+                  <div className="mt-1 text-xs text-slate-500">Auto {selectedSubmission.auto_score || 0} + Manual {selectedSubmission.manual_score || 0}</div>
                 </div>
                 <div className="rounded-lg bg-slate-50 p-4">
                   <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Integrity Events</div>
@@ -353,7 +409,23 @@ const SubmissionDashboard = () => {
                         <div className="flex items-center gap-2 text-sm font-semibold">
                           {answer.is_correct === true && <CheckCircle2 className="text-emerald-600" size={18} />}
                           {answer.is_correct === false && <XCircle className="text-red-600" size={18} />}
-                          <span>{answer.points_awarded ?? 'Manual'} / {answer.question?.points ?? 0} pts</span>
+                          {['SHORT_Q', 'LONG_Q'].includes(answer.question?.question_type) ? (
+                            <label className="flex items-center gap-2">
+                              <input
+                                type="number"
+                                min="0"
+                                max={answer.question?.points ?? 0}
+                                defaultValue={answer.teacher_points_awarded ?? ''}
+                                disabled={!['SUBMITTED', 'IN_REVIEW', 'GRADED'].includes(selectedSubmission.status) || gradingAnswerId === answer.id}
+                                onBlur={(event) => {
+                                  if (event.target.value !== '') saveManualScore(answer, event.target.value);
+                                }}
+                                className="w-16 rounded border border-slate-300 px-2 py-1 text-right disabled:bg-slate-100"
+                                aria-label="Manual score"
+                              />
+                              <span>/ {answer.question?.points ?? 0} pts</span>
+                            </label>
+                          ) : <span>{answer.points_awarded ?? 0} / {answer.question?.points ?? 0} pts</span>}
                         </div>
                       </div>
                       <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
@@ -361,6 +433,18 @@ const SubmissionDashboard = () => {
                       </div>
                     </article>
                   ))
+                )}
+              </div>
+              <div className="mt-6 flex flex-wrap justify-end gap-3 border-t border-slate-200 pt-5">
+                {['SUBMITTED', 'IN_REVIEW'].includes(selectedSubmission.status) && (
+                  <button onClick={completeReview} disabled={reviewActionLoading} className="rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60">
+                    {reviewActionLoading ? 'Saving...' : 'Mark Review Complete'}
+                  </button>
+                )}
+                {selectedSubmission.status === 'GRADED' && (
+                  <button onClick={releaseScore} disabled={reviewActionLoading} className="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60">
+                    {reviewActionLoading ? 'Releasing...' : 'Release Score to Student'}
+                  </button>
                 )}
               </div>
             </div>

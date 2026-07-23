@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiRoutes } from '../../api/routes';
 import { FileText, CheckSquare, PlusCircle } from 'lucide-react';
@@ -7,22 +7,48 @@ import { FileText, CheckSquare, PlusCircle } from 'lucide-react';
 const TeacherDashboard = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState({ quizzes: 0, submissions: 0 });
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+
+
+  const fetchStats = async () => {
+    try {
+      const quizzesRes = await apiRoutes.getQuizzes();
+      const submissionsRes = await apiRoutes.getSubmissions();
+      setStats({
+        quizzes: quizzesRes.data.data?.length || 0,
+        submissions: submissionsRes.data.data?.length || 0
+      });
+    } catch (err) {
+      console.error('Failed to fetch teacher stats', err);
+    }
+  };
+  const fetchAssignedCourses = async () => {
+    const teacherId = localStorage.getItem("userId");
+    if (!teacherId) {
+      setError("Teacher ID not found in local storage.");
+      setLoading(false);
+      return;
+    }
+    try {
+      const response = await apiRoutes.getCourseByTeacherId(teacherId);
+      setCourses(response.data.courses || []);
+    } catch (err) {
+      setError(err.message || 'An error occurred while fetching courses.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const quizzesRes = await apiRoutes.getQuizzes();
-        const submissionsRes = await apiRoutes.getSubmissions();
-        setStats({
-          quizzes: quizzesRes.data.data?.length || 0,
-          submissions: submissionsRes.data.data?.length || 0
-        });
-      } catch {
-        console.error('Failed to fetch stats');
-      }
-    };
     fetchStats();
+    fetchAssignedCourses();
   }, []);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="mx-auto max-w-7xl">
@@ -73,6 +99,29 @@ const TeacherDashboard = () => {
             View Submissions
           </Link>
         </div>
+      </div>
+
+      <div className="mt-10 bg-white p-6 rounded-xl shadow-sm border border-slate-200 max-w-md">
+        <table className="w-full text-left">
+          <thead>
+            <tr>
+              <th className="border-b border-slate-200 py-2 text-sm font-semibold text-slate-700">Assigned Courses</th>
+            </tr>
+          </thead>
+          <tbody>
+            {courses.length === 0 ? (
+              <tr>
+                <td className="py-4 text-sm text-slate-600">No courses assigned.</td>
+              </tr>
+            ) : (
+              courses.map(course => (
+                <tr key={course.id} className="cursor-pointer hover:bg-slate-50" onClick={() => navigate(`/teacher/courses/${course.id}`)}>
+                  <td className="py-4 text-sm text-slate-950">{course.name}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

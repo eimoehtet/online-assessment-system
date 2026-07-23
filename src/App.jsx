@@ -6,9 +6,10 @@ import MainLayout from './components/layout/MainLayout';
 // Pages
 import Login from './pages/auth/Login';
 import AdminDashboard from './pages/admin/Dashboard';
-import UserManagement from './pages/admin/UserManagement';
+import TeachersManagement from './pages/admin/TeachersManagement';
+import StudentsManagement from './pages/admin/StudentsManagement';
+import Reports from './pages/admin/Reports';
 import CourseManagement from './pages/admin/CourseManagement';
-import EnrollmentManagement from './pages/admin/EnrollmentManagement';
 import TeacherDashboard from './pages/teacher/Dashboard';
 import QuizManagement from './pages/teacher/QuizManagement';
 import QuizEditor from './pages/teacher/QuizEditor';
@@ -19,7 +20,6 @@ import StudentQuizzes from './pages/student/StudentQuizzes';
 import QuizTake from './pages/student/QuizTake';
 import StudentResults from './pages/student/StudentResults';
 import EnrollmentDetail from './pages/admin/EnrollmentDetail';
-import AssignedCourses from './pages/teacher/AssignedCourses';
 import UserProfile from './pages/UserProfile';
 import ChangePasswordForm from './pages/ChangePasswordForm';
 
@@ -39,27 +39,32 @@ function App() {
                 <AdminDashboard />
               </ProtectedRoute>
             } />
-            <Route path="/admin/users" element={
+            <Route path="/admin/teachers" element={
               <ProtectedRoute allowedRoles={['ADMIN']}>
-                <UserManagement />
+                <TeachersManagement />
               </ProtectedRoute>
             } />
+            <Route path="/admin/students" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <StudentsManagement />
+              </ProtectedRoute>
+            } />    
             <Route path="/admin/courses" element={
               <ProtectedRoute allowedRoles={['ADMIN', 'TEACHER']}>
                 <CourseManagement />
               </ProtectedRoute>
             } />
-            <Route path="/admin/enrollments" element={
-              <ProtectedRoute allowedRoles={['ADMIN', 'TEACHER']}>
-                <EnrollmentManagement />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/enrollments/:courseId" element={
+            <Route path="/admin/courses/:courseId/students" element={
               <ProtectedRoute allowedRoles={['ADMIN', 'TEACHER']}>
                 <EnrollmentDetail />
               </ProtectedRoute>
             } />
-
+            
+            <Route path="/admin/reports" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <Reports />
+              </ProtectedRoute>
+            } />
 
           <Route path="/profile" element={
             <ProtectedRoute>
@@ -77,11 +82,6 @@ function App() {
             <Route path="/teacher" element={
               <ProtectedRoute allowedRoles={['TEACHER']}>
                 <TeacherDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/teacher/assigned-courses" element={
-              <ProtectedRoute allowedRoles={['TEACHER']}>
-                <AssignedCourses />
               </ProtectedRoute>
             } />
             <Route path="/teacher/quizzes" element={

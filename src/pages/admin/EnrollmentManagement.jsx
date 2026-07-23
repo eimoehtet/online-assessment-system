@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { apiRoutes } from '../../api/routes';
 import { Trash2, UserPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import parseDateOfBirth from '../dateFormat';
 
 const EnrollmentManagement = () => {
   const [courses, setCourses] = useState([]);
@@ -58,10 +59,12 @@ const EnrollmentManagement = () => {
     e.preventDefault();
     try {
       const { course_ids, student_id, ...rest } = formData;
+      const dobFormatted = parseDateOfBirth(rest.date_of_birth);
       const payload = {
         ...rest,
         student_id: student_id ? parseInt(student_id, 10) : undefined,
-        course_ids: course_ids.map(id => parseInt(id, 10))
+        course_ids: course_ids.map(id => parseInt(id, 10)),
+        date_of_birth: dobFormatted ? new Date(dobFormatted) : undefined
       };
       await apiRoutes.createEnrollment(payload);
       setShowModal(false);

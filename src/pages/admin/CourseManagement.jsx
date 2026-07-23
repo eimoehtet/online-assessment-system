@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiRoutes } from '../../api/routes';
-import { Edit2, Trash2, BookPlus } from 'lucide-react';
+import { SquarePen, Trash2, BookPlus } from 'lucide-react';
 
 const CourseManagement = () => {
   const [courses, setCourses] = useState([]);
@@ -111,12 +111,13 @@ const CourseManagement = () => {
               <th className="px-4 py-3">Code</th>
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Teacher</th>
+              <th className="px-4 py-3">Shift</th>
               <th className="px-4 py-3">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 text-sm">
             {courses.length === 0 ? (
-              <tr><td colSpan="4" className="px-4 py-10 text-center text-slate-500">No courses found.</td></tr>
+              <tr><td colSpan="5" className="px-4 py-10 text-center text-slate-500">No courses found.</td></tr>
             ) : (
               courses.map(course => (
                 <tr key={course.id} className="hover:bg-slate-50">
@@ -130,13 +131,17 @@ const CourseManagement = () => {
                       <span>{course.teacher?.name || 'Unassigned'}</span>
                     </div>
                   </td>
+                  <td className="whitespace-nowrap px-4 py-4 text-slate-700">{course.shift}</td>
                   <td className="whitespace-nowrap px-4 py-4">
                     <div className="flex gap-2">
-                      <button onClick={() => openEditModal(course)} className="rounded-lg p-2 text-blue-600 transition hover:bg-red-50 cursor-pointer" title="Edit course">
-                        <Edit2 size={16} />
+                      <button onClick={() => openEditModal(course)} className="rounded-lg p-2 text-yellow-600 transition hover:bg-yellow-50 cursor-pointer" title="Edit course">
+                        <SquarePen size={16} />
                       </button>
                       <button onClick={() => handleDelete(course.id)} className="rounded-lg p-2 text-red-600 transition hover:bg-red-50 cursor-pointer" title="Delete course">
                         <Trash2 size={16} />
+                      </button>
+                      <button onClick={() => window.location.href = `/admin/courses/${course.id}/students`} className="rounded-lg p-2 text-blue-600 transition hover:bg-blue-50 cursor-pointer" title="Manage students">
+                        <span className="text-xs font-semibold">Students</span>
                       </button>
                     </div>
                   </td>
@@ -189,9 +194,24 @@ const CourseManagement = () => {
                   <option value="">Select a teacher</option>
                   {teachers.map(teacher => (
                     <option key={teacher.id} value={teacher.id}>
-                      {teacher.name} ({teacher.email})
+                      {teacher.name} 
                     </option>
                   ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Shift</label>
+                <select
+                  name="shift"
+                  value={formData.shift}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  required
+                >
+                  <option value="">Select a shift</option>
+                  <option value="MORNING">Morning</option>
+                  <option value="AFTERNOON">Afternoon</option>
+                  <option value="EVENING">Evening</option>
                 </select>
               </div>
               <div className="flex gap-3 pt-4">

@@ -6,7 +6,8 @@ export const apiRoutes = {
 
   // Users (Admin)
   getUsers: (params) => apiClient.get("/users", { params }),
-  getTeachers: () => apiClient.get("/users/teachers"),
+  getTeachers: (params) => apiClient.get("/users/teachers", { params }),
+  getStudents: (params) => apiClient.get("/users/students", { params }),
   createUser: (userData) => apiClient.post("/users", userData),
   updateUser: (id, userData) => apiClient.patch(`/users/${id}`, userData),
   deleteUser: (id) => apiClient.delete(`/users/${id}`),
@@ -35,11 +36,12 @@ export const apiRoutes = {
   deleteQuestion: (quizId, questionId) => apiClient.delete(`/quizzes/${quizId}/questions/${questionId}`),
 
   // Enrollments
-  getEnrollments: () => apiClient.get("/enrollments"),
+  getEnrollments: (params) => apiClient.get("/enrollments", { params }),
   createEnrollment: (enrollData) => apiClient.post("/enrollments", enrollData),
   bulkImportEnrollment: (data) => apiClient.post("/enrollments/bulk", data),
   deleteEnrollment: (id) => apiClient.delete(`/enrollments/${id}`),
-  getEnrollmentsByCourse: (courseId) => apiClient.get(`/enrollments/courses/${courseId}`),
+  getEnrollmentsByCourse: (courseId, params) => apiClient.get(`/enrollments/courses/${courseId}`, { params }),
+  getEnrollmentsByStudent: (studentId) => apiClient.get(`/enrollments/students/${studentId}`),
 
   // Submissions
   getSubmissions: () => apiClient.get("/submissions"),
@@ -47,6 +49,10 @@ export const apiRoutes = {
   getSubmissionById: (id) => apiClient.get(`/submissions/${id}`),
   getSubmissionAnswers: (submissionId) => apiClient.get(`/submissions/${submissionId}/answers`),
   submitAnswer: (submissionId, answerData) => apiClient.post(`/submissions/${submissionId}/answers`, answerData),
+  finishSubmission: (submissionId, data = {}) => apiClient.post(`/submissions/${submissionId}/submit`, data),
+  gradeSubmissionAnswer: (submissionId, answerId, gradeData) => apiClient.patch(`/submissions/${submissionId}/answers/${answerId}/grade`, gradeData),
+  completeSubmissionReview: (submissionId, data = {}) => apiClient.post(`/submissions/${submissionId}/complete-review`, data),
+  releaseSubmissionScore: (submissionId) => apiClient.post(`/submissions/${submissionId}/release`),
   recordBehavior: (submissionId, behaviorData) => apiClient.post(`/submissions/${submissionId}/behavior-logs`, behaviorData),
   getBehaviorSummary: (submissionId) => apiClient.get(`/submissions/${submissionId}/behavior-summary`),
 };

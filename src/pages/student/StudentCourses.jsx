@@ -8,11 +8,12 @@ const StudentCourses = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const studentId = localStorage.getItem('userId');
 
   useEffect(() => {
     const fetchEnrollments = async () => {
       try {
-        const res = await apiRoutes.getEnrollments();
+        const res = await apiRoutes.getEnrollmentsByStudent(studentId);
         setEnrollments(res.data.data || []);
       } catch {
         setError('Failed to fetch your courses');
