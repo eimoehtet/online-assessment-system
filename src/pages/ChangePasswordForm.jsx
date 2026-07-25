@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {apiRoutes} from '../api/routes';
+import { Eye, EyeOff } from 'lucide-react';
 
 const ChangePasswordForm = () => {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -7,6 +8,9 @@ const ChangePasswordForm = () => {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const userId = localStorage.getItem('userId'); 
 
 
@@ -43,36 +47,63 @@ const ChangePasswordForm = () => {
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">Current Password</label>
-          <input
-            type="password"
-            id="currentPassword"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            required
-          />
+          <div className="relative">
+            <input
+              type={showCurrentPassword ? 'text' : 'password'}
+              id="currentPassword"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              required
+            />
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+            >
+              {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
         </div>
         <div className="mb-4">
           <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">New Password</label>
-          <input
-            type="password"
-            id="newPassword"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            required
-          />
+          <div className="relative">
+            <input
+              type={showNewPassword ? 'text' : 'password'}
+              id="newPassword"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              required
+            />
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              onClick={() => setShowNewPassword(!showNewPassword)}
+            >
+              {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
         </div>
         <div className="mb-4">
           <label htmlFor="confirmNewPassword" className="block text-sm font-medium text-gray-700">Confirm New Password</label>
-          <input
-            type="password"
-            id="confirmNewPassword"
-            value={confirmNewPassword}
-            onChange={(e) => setConfirmNewPassword(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            required
-          />
+          <div className="relative">
+            <input
+              type={showConfirmPassword ? 'text' : 'password'}
+              id="confirmNewPassword"
+              value={confirmNewPassword}
+              onChange={(e) => setConfirmNewPassword(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              required
+            />
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            >
+              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
         </div>
         <button
           type="submit"

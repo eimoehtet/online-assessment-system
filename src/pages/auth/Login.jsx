@@ -9,6 +9,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -59,8 +60,9 @@ const Login = () => {
           </div>
           <div>
             <label htmlFor="password" className="mb-2 block text-sm font-medium text-slate-700">Password</label>
+            <div className="relative">
             <input
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -71,17 +73,11 @@ const Login = () => {
             <button
               type="button"
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-              onClick={() => {
-                const passwordInput = document.getElementById('password');
-                if (passwordInput.type === 'password') {
-                  passwordInput.type = 'text';
-                } else {
-                  passwordInput.type = 'password';
-                }
-              }}
+              onClick={() => setShowPassword(!showPassword)}
             >
-              {document.getElementById('password')?.type === 'password' ? <Eye size={18} /> : <EyeOff size={18} />}
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
+            </div>
           </div>
           <div className="text-right">
             <a href="/forgot-password" className="text-xs text-slate-400 hover:text-slate-600 hover:underline">Forgot password?</a>

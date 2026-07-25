@@ -17,7 +17,9 @@ const StudentsManagement = () => {
     student_id: '',
     phone_number: '',
     date_of_birth: '',
-    address: ''
+    address: '',
+    status: 1, // Default to active
+
   };
   const [formData, setFormData] = useState(initialFormData);
   const [totalPages, setTotalPages] = useState(1);
@@ -29,6 +31,7 @@ const StudentsManagement = () => {
     try {
       const response = await apiRoutes.getStudents({ page });
       setStudents(response.data.data || []);
+      console.log('Fetched students:', response.data.data);
       setTotalPages(response.data.meta.totalPages || 1);
       setCurrentPage(response.data.meta.page || 1);
     } catch {
@@ -57,7 +60,8 @@ const StudentsManagement = () => {
         student_id: showModal[1].student_id || '',
         phone_number: showModal[1].phone_number || '',
         date_of_birth: showModal[1].date_of_birth ? showModal[1].date_of_birth.split('T')[0] : '',
-        address: showModal[1].address || ''
+        address: showModal[1].address || '',
+        status: showModal[1].status ?? 1,
       });
     } else {
       setFormData(initialFormData);
@@ -94,6 +98,15 @@ const StudentsManagement = () => {
         alert('Failed to delete user');
       }
     }
+  };
+
+  const handleToggleStatus = async (id) => {
+    try {
+      await apiRoutes.toggleUserStatus(id);
+      fetchStudents();
+    } catch {
+      alert('Failed to toggle user status');
+    };
   };
 
   if (loading) return <div className="text-sm text-slate-600">Loading students...</div>;
@@ -158,14 +171,21 @@ const StudentsManagement = () => {
                 <td className="whitespace-nowrap px-4 py-4 text-slate-600">{student.student_id || '-'}</td>
                 <td className="whitespace-nowrap px-4 py-4">
                   <div className="flex gap-2">
-                    <button onClick={() => setShowModal([true, user])} className="rounded-lg p-2 text-yellow-600 transition hover:bg-yellow-50 cursor-pointer" title="Edit user">
+                    <button onClick={() => setShowModal([true, student])} className="rounded-lg p-2 text-yellow-600 transition hover:bg-yellow-50 cursor-pointer" title="Edit user">
                       <SquarePen size={16} />
                     </button>
-                    <button onClick={() => handleDelete(user.id)} className="rounded-lg p-2 text-red-600 transition hover:bg-red-50 cursor-pointer" title="Delete user">
+                    <button onClick={() => handleDelete(student.id)} className="rounded-lg p-2 text-red-600 transition hover:bg-red-50 cursor-pointer" title="Delete user">
                       <Trash2 size={16} />
                     </button>
-                    <button onClick={() => setShowResetPasswordModal([true, user])} className="rounded-lg p-2 text-yellow-600 transition hover:bg-yellow-50 cursor-pointer" title="Change password">
+                    <button onClick={() => setShowResetPasswordModal([true, student])} className="rounded-lg p-2 text-yellow-600 transition hover:bg-yellow-50 cursor-pointer" title="Change password">
                       <KeyIcon size={16} />
+                    </button>
+                    {/* Toggle student status button */}
+                    <button onClick={() => handleToggleStatus(student.id)} className="rounded-lg p-2 text-green-600 transition hover:bg-green-50 cursor-pointer" title="Toggle status">
+                      <label className="switch">
+                        <input type="checkbox" checked={student.status === 1} onChange={() => handleToggleStatus(student.id)} />
+                        <span className="slider round"></span>
+                      </label>
                     </button>
                   </div>
                 </td>
@@ -275,6 +295,71 @@ const StudentsManagement = () => {
           </div>
         </div>
       )}
+      <style>{`
+  /* The switch - the box around the slider */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 26px;
+}
+
+/* Hide default HTML checkbox */
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 4px;
+  bottom: 2px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(20px);
+  -ms-transform: translateX(20px);
+  transform: translateX(20px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+`}</style>
+
     </div>
   );
 };

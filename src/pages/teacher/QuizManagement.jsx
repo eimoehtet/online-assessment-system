@@ -9,10 +9,12 @@ const QuizManagement = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const teacherId = localStorage.getItem('userId');
 
   async function fetchData() {
     try {
-      const quizzesRes = await apiRoutes.getQuizzes();
+      const quizzesRes = await apiRoutes.getQuizzesByTeacherId(teacherId);
+      console.log('Fetched quizzes:', quizzesRes.data.data);
       setQuizzes(quizzesRes.data.data || []);
     } catch {
       setError('Failed to fetch quizzes');

@@ -13,6 +13,9 @@ export const apiRoutes = {
   deleteUser: (id) => apiClient.delete(`/users/${id}`),
   resetPassword: (id, newPassword) => apiClient.post(`/users/${id}/reset-password`, { newPassword }),
   changePassword: (id, currentPassword, newPassword) => apiClient.post(`/users/${id}/change-password`, { currentPassword, newPassword }),
+  toggleUserStatus: (id) => apiClient.post(`/users/${id}/toggle-status`),
+
+
 
   // Courses
   getCourses: (params) => apiClient.get("/courses", { params }),
@@ -25,6 +28,7 @@ export const apiRoutes = {
   // Quizzes
   getQuizzes: () => apiClient.get("/quizzes"),
   getQuizById: (id) => apiClient.get(`/quizzes/${id}`),
+  getQuizzesByTeacherId: (teacherId) => apiClient.get(`/quizzes/teacher/${teacherId}`),
   createQuiz: (quizData) => apiClient.post("/quizzes", quizData),
   updateQuiz: (id, quizData) => apiClient.put(`/quizzes/${id}`, quizData),
   deleteQuiz: (id) => apiClient.delete(`/quizzes/${id}`),
