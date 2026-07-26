@@ -80,11 +80,15 @@ const QuizManagement = () => {
               <div className="space-y-2 text-sm text-slate-600">
                 <div className="flex items-center gap-2">
                   <Clock size={16} />
-                  <span>Time Limit: {format(new Date(quiz.time_limit), 'PPp')}</span>
+                  <span>Start Date: {format(new Date(quiz.start_date), 'PPp')}</span>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Clock size={16} />
+                  <span>End Date: {format(new Date(quiz.end_date), 'PPp')}</span>
+                </div>
+                <div className="flex items-center gap-2" onClick={() => navigate(`/teacher/quizzes/students/${quiz.id}`)}>
                   <Users size={16} />
-                  <span>Allowed Attempts: {quiz.allowed_attempts}</span>
+                  Students List
                 </div>
               </div>
 

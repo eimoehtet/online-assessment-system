@@ -22,6 +22,7 @@ import StudentResults from './pages/student/StudentResults';
 import EnrollmentDetail from './pages/admin/EnrollmentDetail';
 import UserProfile from './pages/UserProfile';
 import ChangePasswordForm from './pages/ChangePasswordForm';
+import StudentList from './pages/teacher/StudentList';
 
 function App() {
   return (
@@ -102,6 +103,11 @@ function App() {
             <Route path="/teacher/submissions" element={
               <ProtectedRoute allowedRoles={['TEACHER']}>
                 <SubmissionDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/teacher/quizzes/students/:quizId" element={
+              <ProtectedRoute allowedRoles={['TEACHER']}>
+                <StudentList />
               </ProtectedRoute>
             } />
 
