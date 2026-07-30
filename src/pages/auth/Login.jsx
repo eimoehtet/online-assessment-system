@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import ppiuLogo from '../../assets/ppiu-logo.png';
 import { Eye, EyeOff } from 'lucide-react';
@@ -80,7 +80,7 @@ const Login = () => {
             </div>
           </div>
           <div className="text-right">
-            <a href="/forgot-password" className="text-xs text-slate-400 hover:text-slate-600 hover:underline">Forgot password?</a>
+            <Link to="/forgot-password" className="text-xs text-slate-500 hover:text-red-600 hover:underline transition-colors font-medium">Forgot password?</Link>
           </div>
           <button
             type="submit"

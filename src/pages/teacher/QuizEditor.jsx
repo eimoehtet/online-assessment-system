@@ -40,8 +40,8 @@ const QuizEditor = () => {
 
   const fetchInitialData = async () => {
     try {
-      const coursesRes = await apiRoutes.getCourses();
-      setCourses(coursesRes.data.data || []);
+      const coursesRes = await apiRoutes.getCourseByTeacherId(teacher_id);
+      setCourses(coursesRes.data.courses || []);
 
       if (isEditing) {
         const [quizRes, questionsRes] = await Promise.all([

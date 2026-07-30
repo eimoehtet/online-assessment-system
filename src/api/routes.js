@@ -3,6 +3,8 @@ import apiClient from "./client";
 export const apiRoutes = {
   // Auth
   login: (credentials) => apiClient.post("/users/login", credentials),
+  forgotPassword: (email) => apiClient.post("/users/forgot-password", { email }),
+  resetPasswordWithToken: (token, newPassword) => apiClient.post("/users/reset-password-with-token", { token, newPassword }),
 
   // Users (Admin)
   getUsers: (params) => apiClient.get("/users", { params }),

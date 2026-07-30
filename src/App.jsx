@@ -5,6 +5,8 @@ import MainLayout from './components/layout/MainLayout';
 
 // Pages
 import Login from './pages/auth/Login';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
 import AdminDashboard from './pages/admin/Dashboard';
 import TeachersManagement from './pages/admin/TeachersManagement';
 import StudentsManagement from './pages/admin/StudentsManagement';
@@ -31,6 +33,8 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Protected Routes */}
           <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>

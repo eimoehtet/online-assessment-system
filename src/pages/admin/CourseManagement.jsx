@@ -38,6 +38,7 @@ const CourseManagement = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    console.log(`Input changed: ${name} = ${value}`);
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -52,13 +53,15 @@ const CourseManagement = () => {
     setFormData({
       name: course.name,
       code: course.code,
-      teacher_id: course.teacher_id.toString()
+      teacher_id: course.teacher_id.toString(),
+      shift: course.shift
     });
     setShowModal(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('Form submitted with data:', formData);
     try {
       const data = {
         ...formData,
