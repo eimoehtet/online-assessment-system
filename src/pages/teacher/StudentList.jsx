@@ -9,7 +9,7 @@ const StudentList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showResetPasswordModal, setShowResetPasswordModal] = useState([false, null]);
-
+  const [attendance, setAttendance] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const [nameSearch, setNameSearch] = useState("");
@@ -18,7 +18,6 @@ const StudentList = () => {
 
 
   async function fetchStudents() {
-    console.log('Fetching students for quizId:', quizId, 'and teacherId:', teacherId, 'on page:', currentPage);
     try {
       const response = await apiRoutes.getStudentsByQuizIdAndTeacherId(quizId, teacherId, { page: currentPage });
       setStudents(response.data.data || []);
@@ -31,12 +30,24 @@ const StudentList = () => {
     }
   }
 
+  async function getAttendance(quizId) {
+    try {
+      const response = await apiRoutes.getQuizAttendance(quizId);
+      setAttendance(response.data.data || []);
+      return response.data.data || [];
+    } catch {
+      setError('Failed to fetch attendance');
+      return [];
+    }
+  }
+
   const handlePageChange = (page) => {
     setCurrentPage(page);
     fetchStudents();
   };
 
   useEffect(() => {
+    getAttendance(quizId);
     fetchStudents();
   }, []);
 
@@ -46,11 +57,11 @@ const StudentList = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleToggleStatus = async (id) => {
+  const handleToggleStatus = async (student_id, status) => {
     try {
-      await apiRoutes.toggleUserStatus(id);
-      const quizId = localStorage.getItem('quizId');
-      fetchStudents(1, quizId, teacherId);
+      await apiRoutes.updateQuizAttendance({ quiz_id: quizId, student_id, status });
+      fetchStudents();
+      getAttendance(quizId);
     } catch {
       alert('Failed to toggle user status');
     };
@@ -58,12 +69,22 @@ const StudentList = () => {
 
   if (loading) return <div className="text-sm text-slate-600">Loading students...</div>;
 
-    const filteredStudents = students?.filter((student) => {
-    const nameMatch = student.name
-      .toLowerCase()
+  const filteredStudents = students?.filter((student) => {
+    const nameMatch = student.student.name?.toLowerCase()
       .includes(nameSearch.toLowerCase());
     return nameMatch;
   });
+
+  const attendanceMap = new Map(
+  attendance.map(a => [a.student_id, a.status])
+);
+
+const mergedStudents = students.map(student => {
+  return {
+    ...student,
+    attendanceStatus: attendanceMap.get(student.student_id) || false,
+  };
+});
 
   return (
     <div className="mx-auto max-w-7xl">
@@ -76,7 +97,7 @@ const StudentList = () => {
             placeholder="Search by name..."
             value={nameSearch}
             onChange={(e) => setNameSearch(e.target.value)}
-            className="border border-gray-300 p-2 rounded-md w-[250px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-gray-300 p-2 rounded-md w-[300px] bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -94,27 +115,27 @@ const StudentList = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 text-sm">
-            {filteredStudents.map(student => (
+            {mergedStudents.map(student => (
               <tr key={student.id} className="hover:bg-slate-50">
-                <td className="whitespace-nowrap px-4 py-4 text-slate-600">{students.indexOf(student) + 1}</td>
-                <td className="whitespace-nowrap px-4 py-4 font-medium text-slate-950">{student.name}</td>
-                <td className="whitespace-nowrap px-4 py-4 text-slate-600">{student.email}</td>
-                <td className="whitespace-nowrap px-4 py-4 text-slate-600">{student.student_id || '-'}</td>
+                <td className="whitespace-nowrap px-4 py-4 text-slate-600">{mergedStudents.indexOf(student) + 1}</td>
+                <td className="whitespace-nowrap px-4 py-4 font-medium text-slate-950">{student.student.name}</td>
+                <td className="whitespace-nowrap px-4 py-4 text-slate-600">{student.student.email}</td>
+                <td className="whitespace-nowrap px-4 py-4 text-slate-600">{student.student.student_id || '-'}</td>
                 <td className="whitespace-nowrap px-4 py-4">
                   <div className="flex gap-2">
                     <button onClick={() => setShowModal([true, student])} className="rounded-lg p-2 text-yellow-600 transition hover:bg-yellow-50 cursor-pointer" title="Edit user">
                       <SquarePen size={16} />
                     </button>
-                    <button onClick={() => handleDelete(student.id)} className="rounded-lg p-2 text-red-600 transition hover:bg-red-50 cursor-pointer" title="Delete user">
+                    <button onClick={() => handleDelete(student.student.id)} className="rounded-lg p-2 text-red-600 transition hover:bg-red-50 cursor-pointer" title="Delete user">
                       <Trash2 size={16} />
                     </button>
                     <button onClick={() => setShowResetPasswordModal([true, student])} className="rounded-lg p-2 text-yellow-600 transition hover:bg-yellow-50 cursor-pointer" title="Change password">
                       <KeyIcon size={16} />
                     </button>
-                    {/* Toggle student status button */}
-                    <button onClick={() => handleToggleStatus(student.id)} className="rounded-lg p-2 text-green-600 transition hover:bg-green-50 cursor-pointer" title="Toggle status">
-                      <label className="switch">
-                        <input type="checkbox" checked={student.status === 1} onChange={() => handleToggleStatus(student.id)} />
+                    {/* Checkbox */}
+                    <button title="Toggle status">
+                      <label className="checkbox">
+                        <input type="checkbox" className='mt-1 w-[15px] h-[15px]' checked={student?.attendanceStatus} onChange={() => handleToggleStatus(student?.student.id, student?.attendanceStatus)} />
                         <span className="slider round"></span>
                       </label>
                     </button>
@@ -167,70 +188,6 @@ const StudentList = () => {
           </div>
         </div>
       )}
-      <style>{`
-  /* The switch - the box around the slider */
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 50px;
-  height: 26px;
-}
-
-/* Hide default HTML checkbox */
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-/* The slider */
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  -webkit-transition: .4s;
-  transition: .4s;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 22px;
-  width: 22px;
-  left: 4px;
-  bottom: 2px;
-  background-color: white;
-  -webkit-transition: .4s;
-  transition: .4s;
-}
-
-input:checked + .slider {
-  background-color: #2196F3;
-}
-
-input:focus + .slider {
-  box-shadow: 0 0 1px #2196F3;
-}
-
-input:checked + .slider:before {
-  -webkit-transform: translateX(20px);
-  -ms-transform: translateX(20px);
-  transform: translateX(20px);
-}
-
-/* Rounded sliders */
-.slider.round {
-  border-radius: 34px;
-}
-
-.slider.round:before {
-  border-radius: 50%;
-}
-`}</style>
 
     </div>
   );

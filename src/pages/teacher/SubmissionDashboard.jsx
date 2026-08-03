@@ -232,7 +232,7 @@ const SubmissionDashboard = () => {
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             placeholder="Search by student, email, or quiz..."
-            className="w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+            className="w-full rounded-lg bg-white border border-slate-300 py-2.5 pl-10 pr-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
           />
         </div>
         <div className="relative">

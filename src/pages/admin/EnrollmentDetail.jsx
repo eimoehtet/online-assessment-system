@@ -161,7 +161,7 @@ const EnrollmentDetail = () => {
             placeholder="Search by name..."
             value={nameSearch}
             onChange={(e) => setNameSearch(e.target.value)}
-            className="border border-gray-300 p-2 rounded-md w-[250px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border bg-white border-gray-300 p-2 text-sm rounded-md w-[300px] focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <div className="relative">
             <select
@@ -180,8 +180,8 @@ const EnrollmentDetail = () => {
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <button className="bg-blue-600 text-white text-sm px-4 py-2 rounded-md hover:bg-blue-500 cursor-pointer" onClick={() =>setShowAssignStudentModal(true)}>
-            Assign Student
+          <button className="bg-red-600 text-white text-sm px-4 py-2 rounded-md hover:bg-red-500 cursor-pointer" onClick={() =>setShowAssignStudentModal(true)}>
+            Add Student
           </button>
           <input
             type="file"
@@ -194,7 +194,7 @@ const EnrollmentDetail = () => {
             className="bg-red-600 text-white text-sm px-4 py-2 rounded-md hover:bg-red-500 cursor-pointer "
             disabled={importing}
           >
-            {importing ? "Importing..." : "Import CSV"}
+            {importing ? "Importing..." : "Import Student List"}
           </button>
         </div>
       </div>
@@ -274,7 +274,7 @@ const EnrollmentDetail = () => {
       {showAssignStudentModal && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 p-4">
           <div className="bg-white p-6 rounded-lg w-[400px]">
-            <h2 className="text-lg font-semibold mb-4">Assign Student</h2>
+            <h2 className="text-lg font-semibold mb-4">Add Student</h2>
             <form className="space-y-4" onSubmit= {handleAssignStudent}>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
@@ -283,7 +283,7 @@ const EnrollmentDetail = () => {
                 <input
                   type="text"
                   name="student_id"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 sm:text-sm"
+                  className="mt-1 block p-2 border border-gray-200 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 sm:text-sm"
                 />
               </div>
               <div>
@@ -292,14 +292,14 @@ const EnrollmentDetail = () => {
                 </label>
                 <select
                   name="shift"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 sm:text-sm"
+                  className="mt-1 p-2 border border-gray-200 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 sm:text-sm"
                 >
                   <option value="MORNING">Morning</option>
                   <option value="AFTERNOON">Afternoon</option>
                   <option value="EVENING">Evening</option>
                 </select>
               </div>
-              <div className="flex justify-end space-x-2">
+              <div className="flex justify-end space-x-2 pt-4">
                 <button
                   type="button"
                   onClick={() => setShowAssignStudentModal(false)}
@@ -309,7 +309,7 @@ const EnrollmentDetail = () => {
                 </button>
                 <button
                   type="submit"
-                  className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500"
+                  className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500"
                 >
                   Assign
                 </button>

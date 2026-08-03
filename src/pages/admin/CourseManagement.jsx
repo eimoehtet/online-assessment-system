@@ -92,6 +92,15 @@ const CourseManagement = () => {
     }
   };
 
+  const handleToggleStatus = async (id) => {
+    try {
+      await apiRoutes.toggleCourseStatus(id);
+      fetchData();
+    } catch {
+      alert('Failed to toggle course status');
+    }
+  };
+
   if (loading) return <div className="text-sm text-slate-600">Loading courses...</div>;
 
   return (
@@ -143,10 +152,18 @@ const CourseManagement = () => {
                       <button onClick={() => handleDelete(course.id)} className="rounded-lg p-2 text-red-600 transition hover:bg-red-50 cursor-pointer" title="Delete course">
                         <Trash2 size={16} />
                       </button>
-                      <button onClick={() => window.location.href = `/admin/courses/${course.id}/students`} className="rounded-lg p-2 text-blue-600 transition hover:bg-blue-50 cursor-pointer" title="Manage students">
-                        <span className="text-xs font-semibold">Students</span>
-                      </button>
+                      <button onClick={() => handleToggleStatus(course.id)} className="rounded-lg p-2 text-green-600 transition hover:bg-green-50 cursor-pointer" title="Toggle status">
+                      <label className="switch">
+                        <input type="checkbox" checked={course.status} onChange={() => handleToggleStatus(course.id)} />
+                        <span className="slider round"></span>
+                      </label>
+                    </button>
                     </div>
+                  </td>
+                  <td>
+                    <button onClick={() => window.location.href = `/admin/courses/${course.id}/students`} className="rounded-sm p-2 transition border border-red-600 hover:bg-red-200 cursor-pointer" title="Manage students">
+                      <span className="text-xs font-semibold">Add Students</span>
+                    </button>
                   </td>
                 </tr>
               ))
@@ -227,6 +244,70 @@ const CourseManagement = () => {
           </div>
         </div>
       )}
+       <style>{`
+  /* The switch - the box around the slider */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 26px;
+}
+
+/* Hide default HTML checkbox */
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 4px;
+  bottom: 2px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(20px);
+  -ms-transform: translateX(20px);
+  transform: translateX(20px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+`}</style>
     </div>
   );
 };

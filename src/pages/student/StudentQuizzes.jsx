@@ -16,7 +16,6 @@ const StudentQuizzes = () => {
       try {
         const res = await apiRoutes.getQuizzes();
         const fetchedAt = Date.now();
-        // Filter by courseId and only show published quizzes
         const courseQuizzes = (res.data.data || []).filter(
           q => q.course_id === parseInt(courseId) && q.status === 'PUBLISHED'
         ).map(q => ({
@@ -32,6 +31,17 @@ const StudentQuizzes = () => {
     };
     fetchQuizzes();
   }, [courseId]);
+
+  const fetchQuizAccessByStudentId = async (studentId) => {
+    try {
+      const res = await apiRoutes.getQuizAccessByUserId(studentId);
+      console.log('Fetched quiz access:', res);
+      return res.data.quiz_access;
+    } catch (err) {
+      console.error('Error fetching quiz access:', err);
+      return [];
+    }
+  };
 
   const handleStartQuiz = async (quizId) => {
     if (window.confirm('Are you ready to start the quiz? The timer will begin immediately.')) {

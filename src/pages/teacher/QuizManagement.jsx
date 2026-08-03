@@ -14,7 +14,6 @@ const QuizManagement = () => {
   async function fetchData() {
     try {
       const quizzesRes = await apiRoutes.getQuizzesByTeacherId(teacherId);
-      console.log('Fetched quizzes:', quizzesRes.data.data);
       setQuizzes(quizzesRes.data.data || []);
     } catch {
       setError('Failed to fetch quizzes');
@@ -86,7 +85,7 @@ const QuizManagement = () => {
                   <Clock size={16} />
                   <span>End Date: {format(new Date(quiz.end_date), 'PPp')}</span>
                 </div>
-                <div className="flex items-center gap-2" onClick={() => navigate(`/teacher/quizzes/students/${quiz.id}`)}>
+                <div className="flex items-center gap-2 w-fit bg-red-100 px-2 py-1 rounded-lg cursor-pointer hover:underline hover:text-blue-600" onClick={() => navigate(`/teacher/quizzes/students/${quiz.id}`)}>
                   <Users size={16} />
                   Students List
                 </div>

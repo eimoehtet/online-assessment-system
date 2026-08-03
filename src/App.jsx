@@ -25,6 +25,7 @@ import EnrollmentDetail from './pages/admin/EnrollmentDetail';
 import UserProfile from './pages/UserProfile';
 import ChangePasswordForm from './pages/ChangePasswordForm';
 import StudentList from './pages/teacher/StudentList';
+import QuizReportDetails from './pages/admin/QuizReportDetails';
 
 function App() {
   return (
@@ -68,6 +69,11 @@ function App() {
             <Route path="/admin/reports" element={
               <ProtectedRoute allowedRoles={['ADMIN']}>
                 <Reports />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/reports/:quizId" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <QuizReportDetails />
               </ProtectedRoute>
             } />
 

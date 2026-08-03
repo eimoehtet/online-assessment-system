@@ -133,7 +133,7 @@ const StudentsManagement = () => {
             placeholder="Search by name..."
             value={nameSearch}
             onChange={(e) => setNameSearch(e.target.value)}
-            className="border border-gray-300 p-2 rounded-md w-[250px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-gray-300 p-2 bg-white rounded-md w-[300px] focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -214,7 +214,7 @@ const StudentsManagement = () => {
       {showModal[0] && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 p-4">
           <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-slate-200 bg-white p-6 shadow-xl">
-            <h2 className="text-xl font-semibold text-slate-950">{showModal[1] ? 'Edit User' : 'Add New User'}</h2>
+            <h2 className="text-xl font-semibold text-slate-950">{showModal[1] ? 'Edit Student' : 'Add New Student'}</h2>
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">Full Name</label>
@@ -229,14 +229,6 @@ const StudentsManagement = () => {
                 <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="password" name="password" value={formData.password} onChange={handleInputChange} required />
               </div>}
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">Role</label>
-                <select name="role" value={formData.role} onChange={handleInputChange} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
-                  <option value="STUDENT">Student</option>
-                  <option value="TEACHER">Teacher</option>
-                  <option value="ADMIN">Admin</option>
-                </select>
-              </div>
-              <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">Gender</label>
                 <select name="gender" value={formData.gender || ''} onChange={handleInputChange} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
                   <option value="">Select Gender</option>
@@ -246,24 +238,16 @@ const StudentsManagement = () => {
                 </select>
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">Student / Teacher ID </label>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Student ID </label>
                 <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="text" name="student_id" value={formData.student_id} onChange={handleInputChange} />
               </div>
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">Phone Number</label>
                 <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="text" name="phone_number" value={formData.phone_number} onChange={handleInputChange} required />
               </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">Date of Birth</label>
-                <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="date" name="date_of_birth" value={formData.date_of_birth} onChange={handleInputChange} required />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">Address</label>
-                <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="text" name="address" value={formData.address} onChange={handleInputChange} required />
-              </div>
               <div className="flex gap-3 pt-4">
                 <button type="button" onClick={() => setShowModal([false, null])} className="flex-1 rounded-lg bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-300 cursor-pointer">Cancel</button>
-                <button type="submit" className="flex-1 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500 cursor-pointer">{showModal[1] ? 'Update User' : 'Create User'}</button>
+                <button type="submit" className="flex-1 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500 cursor-pointer">{showModal[1] ? 'Update Student' : 'Create Student'}</button>
               </div>
             </form>
           </div>

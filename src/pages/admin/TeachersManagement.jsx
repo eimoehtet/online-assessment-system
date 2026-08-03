@@ -94,6 +94,15 @@ const TeachersManagement = () => {
     }
   };
 
+  const handleToggleStatus = async (id) => {
+    try {
+      await apiRoutes.toggleUserStatus(id);
+      fetchTeachers();
+    } catch {
+      alert('Failed to toggle user status');
+    }
+  };
+
   if (loading) return <div className="text-sm text-slate-600">Loading Teachers...</div>;
 
     const filteredTeachers = teachers?.filter((teacher) => {
@@ -118,7 +127,7 @@ const TeachersManagement = () => {
             placeholder="Search by name..."
             value={nameSearch}
             onChange={(e) => setNameSearch(e.target.value)}
-            className="border border-gray-300 p-2 rounded-md w-[250px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-gray-300 p-2 rounded-md w-[300px] bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -132,8 +141,7 @@ const TeachersManagement = () => {
               <th className="px-4 py-3">No</th>
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3">Role</th>
-              <th className="px-4 py-3">Student ID</th>
+              <th className="px-4 py-3">Teacher ID</th>
               <th className="px-4 py-3">Actions</th>
             </tr>
           </thead>
@@ -143,17 +151,6 @@ const TeachersManagement = () => {
                 <td className="whitespace-nowrap px-4 py-4 text-slate-600">{teachers.indexOf(teacher) + 1}</td>
                 <td className="whitespace-nowrap px-4 py-4 font-medium text-slate-950">{teacher.name}</td>
                 <td className="whitespace-nowrap px-4 py-4 text-slate-600">{teacher.email}</td>
-                <td className="whitespace-nowrap px-4 py-4">
-                  <span className={`rounded-md px-2 py-1 text-xs font-bold ${
-                    teacher.role === 'ADMIN'
-                      ? 'bg-emerald-50 text-emerald-700'
-                      : teacher.role === 'TEACHER'
-                        ? 'bg-red-50 text-blue-700'
-                        : 'bg-amber-50 text-amber-700'
-                  }`}>
-                    {teacher.role}
-                  </span>
-                </td>
                 <td className="whitespace-nowrap px-4 py-4 text-slate-600">{teacher.student_id || '-'}</td>
                 <td className="whitespace-nowrap px-4 py-4">
                   <div className="flex gap-2">
@@ -165,6 +162,13 @@ const TeachersManagement = () => {
                     </button>
                     <button onClick={() => setShowResetPasswordModal([true, teacher])} className="rounded-lg p-2 text-yellow-600 transition hover:bg-yellow-50 cursor-pointer" title="Change password">
                       <KeyIcon size={16} />
+                    </button>
+                    {/* Toggle teacher status button */}
+                    <button onClick={() => handleToggleStatus(teacher.id)} className="rounded-lg p-2 text-green-600 transition hover:bg-green-50 cursor-pointer" title="Toggle status">
+                      <label className="switch">
+                        <input type="checkbox" checked={teacher.status === 1} onChange={() => handleToggleStatus(teacher.id)} />
+                        <span className="slider round"></span>
+                      </label>
                     </button>
                   </div>
                 </td>
@@ -193,7 +197,7 @@ const TeachersManagement = () => {
       {showModal[0] && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 p-4">
           <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-slate-200 bg-white p-6 shadow-xl">
-            <h2 className="text-xl font-semibold text-slate-950">{showModal[1] ? 'Edit User' : 'Add New User'}</h2>
+            <h2 className="text-xl font-semibold text-slate-950">{showModal[1] ? 'Edit Teacher' : 'Add New Teacher'}</h2>
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">Full Name</label>
@@ -208,14 +212,6 @@ const TeachersManagement = () => {
                 <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="password" name="password" value={formData.password} onChange={handleInputChange} required />
               </div>}
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">Role</label>
-                <select name="role" value={formData.role} onChange={handleInputChange} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
-                  <option value="STUDENT">Student</option>
-                  <option value="TEACHER">Teacher</option>
-                  <option value="ADMIN">Admin</option>
-                </select>
-              </div>
-              <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">Gender</label>
                 <select name="gender" value={formData.gender || ''} onChange={handleInputChange} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
                   <option value="">Select Gender</option>
@@ -224,24 +220,12 @@ const TeachersManagement = () => {
                 </select>
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">Student / Teacher ID </label>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Teacher ID </label>
                 <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="text" name="student_id" value={formData.student_id} onChange={handleInputChange} />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">Phone Number</label>
-                <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="text" name="phone_number" value={formData.phone_number} onChange={handleInputChange} required />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">Date of Birth</label>
-                <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="date" name="date_of_birth" value={formData.date_of_birth} onChange={handleInputChange} required />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">Address</label>
-                <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="text" name="address" value={formData.address} onChange={handleInputChange} required />
               </div>
               <div className="flex gap-3 pt-4">
                 <button type="button" onClick={() => setShowModal([false, null])} className="flex-1 rounded-lg bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-300 cursor-pointer">Cancel</button>
-                <button type="submit" className="flex-1 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500 cursor-pointer">{showModal[1] ? 'Update User' : 'Create User'}</button>
+                <button type="submit" className="flex-1 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500 cursor-pointer">{showModal[1] ? 'Update Teacher' : 'Create Teacher'}</button>
               </div>
             </form>
           </div>
@@ -273,6 +257,71 @@ const TeachersManagement = () => {
           </div>
         </div>
       )}
+        <style>{`
+  /* The switch - the box around the slider */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 26px;
+}
+
+/* Hide default HTML checkbox */
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 4px;
+  bottom: 2px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(20px);
+  -ms-transform: translateX(20px);
+  transform: translateX(20px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+`}</style>
+
     </div>
   );
 };

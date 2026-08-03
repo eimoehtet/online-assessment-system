@@ -134,14 +134,6 @@ const EnrollmentManagement = () => {
                 <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="password" name="password" value={formData.password} onChange={handleInputChange} required />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">Role</label>
-                <select name="role" value={formData.role} onChange={handleInputChange} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
-                  <option value="STUDENT">Student</option>
-                  <option value="TEACHER">Teacher</option>
-                  <option value="ADMIN">Admin</option>
-                </select>
-              </div>
-              <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">Gender</label>
                 <select name="gender" value={formData.gender || ''} onChange={handleInputChange} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
                   <option value="">Select Gender</option>

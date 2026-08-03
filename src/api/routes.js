@@ -18,7 +18,6 @@ export const apiRoutes = {
   toggleUserStatus: (id) => apiClient.post(`/users/${id}/toggle-status`),
 
 
-
   // Courses
   getCourses: (params) => apiClient.get("/courses", { params }),
   getCourseById: (id) => apiClient.get(`/courses/${id}`),
@@ -26,6 +25,7 @@ export const apiRoutes = {
   createCourse: (courseData) => apiClient.post("/courses", courseData),
   updateCourse: (id, courseData) => apiClient.patch(`/courses/${id}`, courseData),
   deleteCourse: (id) => apiClient.delete(`/courses/${id}`),
+  toggleCourseStatus: (id) => apiClient.post(`/courses/${id}/toggle-status`),
 
   // Quizzes
   getQuizzes: () => apiClient.get("/quizzes"),
@@ -34,6 +34,12 @@ export const apiRoutes = {
   createQuiz: (quizData) => apiClient.post("/quizzes", quizData),
   updateQuiz: (id, quizData) => apiClient.put(`/quizzes/${id}`, quizData),
   deleteQuiz: (id) => apiClient.delete(`/quizzes/${id}`),
+  getQuizzesReportByAdmin: () => apiClient.get("/quizzes/report/all"),
+
+  // Quiz Attendance
+  getQuizAttendance: (quiz_id) => apiClient.get(`/quiz_attendances/${quiz_id}`),
+  updateQuizAttendance: ({ quiz_id, student_id, status }) => apiClient.patch(`/quiz_attendances/${quiz_id}`, { quiz_id, student_id, status }),
+
 
   // Questions
   getQuestions: (quizId) => apiClient.get(`/quizzes/${quizId}/questions`),
@@ -62,4 +68,5 @@ export const apiRoutes = {
   releaseSubmissionScore: (submissionId) => apiClient.post(`/submissions/${submissionId}/release`),
   recordBehavior: (submissionId, behaviorData) => apiClient.post(`/submissions/${submissionId}/behavior-logs`, behaviorData),
   getBehaviorSummary: (submissionId) => apiClient.get(`/submissions/${submissionId}/behavior-summary`),
+  getSubmissionsByQuizId: (quizId) => apiClient.get(`/submissions/quiz/${quizId}`),
 };
