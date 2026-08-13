@@ -1,4 +1,4 @@
-# LightLearn Frontend (React)
+# Frontend (React)
 
 Frontend project built with React + Vite.
 
