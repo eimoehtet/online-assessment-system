@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiRoutes } from '../../api/routes';
+import { useAuth } from '../../context/AuthContext';
 import { BookOpen, ArrowRight, Book } from 'lucide-react';
 
 const StudentCourses = () => {
@@ -8,7 +9,8 @@ const StudentCourses = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const studentId = localStorage.getItem('userId');
+  const { user } = useAuth();
+  const studentId = user?.id;
 
   useEffect(() => {
     const fetchEnrollments = async () => {
@@ -22,7 +24,7 @@ const StudentCourses = () => {
       }
     };
     fetchEnrollments();
-  }, []);
+  }, [studentId]);
 
   if (loading) return <div className="text-sm text-slate-600">Loading courses...</div>;
 

@@ -1,7 +1,7 @@
-import React from "react";
 import { useState, useEffect } from "react";
 import { apiRoutes } from "../../api/routes";
 import { Eye } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Reports = () => {
   const [reportData, setReportData] = useState(null);
@@ -37,15 +37,15 @@ const Reports = () => {
           <table className="min-w-full divide-y divide-slate-200">
             <thead>
               <tr className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                <th className="px-4 py-2">Quiz ID</th>
-                <th className="px-4 py-2">Quiz Title</th>
+                <th className="px-4 py-2">ID</th>
+                <th className="px-4 py-2">Title</th>
                 <th className="px-4 py-2">Course</th>
                 <th className="px-4 py-2">Teacher</th>
                 <th className="px-4 py-2">Shift</th>
                 <th className="px-4 py-2">Number of Students</th>
                 <th className="px-4 py-2">Attendees</th>
                 <th className="px-4 py-2">Absences</th>
-                <th className="px-4 py-2">Details</th>
+                <th className="px-4 py-2">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 text-sm">
@@ -60,7 +60,7 @@ const Reports = () => {
                   <td className="whitespace-nowrap px-4 py-4 text-slate-600">{report.attendees}</td>
                   <td className="whitespace-nowrap px-4 py-4 text-slate-600">{report.absences}</td>
                   <td className="whitespace-nowrap px-4 py-4 text-slate-600">
-                    <a href={`/admin/reports/${report.quiz_id}`} className="text-blue-600 hover:underline"><Eye size={16} /></a>
+                    <Link to={`/admin/reports/${report.quiz_id}`} className="text-blue-600 hover:underline" aria-label={`View ${report.quiz_title} report`}><Eye size={16} /></Link>
                   </td>
                 </tr>
               ))}

@@ -3,6 +3,9 @@ import apiClient from "./client";
 export const apiRoutes = {
   // Auth
   login: (credentials) => apiClient.post("/users/login", credentials),
+  refresh: (csrfToken) => apiClient.post("/users/refresh", null, { headers: { "X-CSRF-Token": csrfToken } }),
+  logout: (csrfToken) => apiClient.post("/users/logout", null, { headers: { "X-CSRF-Token": csrfToken } }),
+  getCurrentUser: () => apiClient.get("/users/me"),
   forgotPassword: (email) => apiClient.post("/users/forgot-password", { email }),
   resetPasswordWithToken: (token, newPassword) => apiClient.post("/users/reset-password-with-token", { token, newPassword }),
 
@@ -14,7 +17,7 @@ export const apiRoutes = {
   updateUser: (id, userData) => apiClient.patch(`/users/${id}`, userData),
   deleteUser: (id) => apiClient.delete(`/users/${id}`),
   resetPassword: (id, newPassword) => apiClient.post(`/users/${id}/reset-password`, { newPassword }),
-  changePassword: (id, currentPassword, newPassword) => apiClient.post(`/users/${id}/change-password`, { currentPassword, newPassword }),
+  changePassword: (currentPassword, newPassword) => apiClient.post("/users/me/change-password", { currentPassword, newPassword }),
   toggleUserStatus: (id) => apiClient.post(`/users/${id}/toggle-status`),
 
 

@@ -1,9 +1,9 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const UserProfile = () => {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem('user'));
+  const { user } = useAuth();
 
   return (
     <div className="p-4 max-w-[500px] bg-white shadow-md rounded-lg text-slate-600 p-6">

@@ -26,9 +26,9 @@ const TeacherDashboard = () => {
     }
   };
   const fetchAssignedCourses = async () => {
-    const teacherId = localStorage.getItem("userId");
+    const teacherId = user?.id;
     if (!teacherId) {
-      setError("Teacher ID not found in local storage.");
+      setError("Teacher ID is unavailable.");
       setLoading(false);
       return;
     }
@@ -115,7 +115,7 @@ const TeacherDashboard = () => {
               </tr>
             ) : (
               courses.map(course => (
-                <tr key={course.id} className="cursor-pointer hover:bg-slate-50" onClick={() => navigate(`/teacher/courses/${course.id}`)}>
+                <tr key={course.id} className="cursor-pointer hover:bg-slate-50">
                   <td className="py-4 text-sm text-slate-950">{course.name}</td>
                 </tr>
               ))

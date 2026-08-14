@@ -1,3 +1,4 @@
+import { Navigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -10,10 +11,18 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  
-  const { login } = useAuth();
+  const { user, login, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  if (authLoading) {
+    return <div className="grid min-h-screen place-items-center bg-slate-50 text-sm text-slate-600">Restoring session...</div>;
+  }
+
+  if (user) {
+    const destination = location.state?.from?.pathname || `/${user.role.toLowerCase()}`;
+    return <Navigate to={destination} replace />;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,8 +32,6 @@ const Login = () => {
     try {
       const user = await login(email, password);
       const from = location.state?.from?.pathname || `/${user.role.toLowerCase()}`;
-      localStorage.setItem('userId', user.id);
-      localStorage.setItem('userRole', user.role);
       navigate(from, { replace: true });
     } catch (err) {
       setError(err?.response?.data?.message || 'Invalid email or password');

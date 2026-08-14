@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { apiRoutes } from '../../api/routes';
+import { useAuth } from '../../context/AuthContext';
 import { 
   Save, 
   Plus, 
@@ -22,7 +23,8 @@ const QuizEditor = () => {
   const [courses, setCourses] = useState([]);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
-  const teacher_id = JSON.parse(localStorage.getItem('userId'));
+  const { user } = useAuth();
+  const teacher_id = user?.id;
 
   // Unified state for Quiz and Questions
   const [formData, setFormData] = useState({
@@ -448,17 +450,6 @@ const QuizEditor = () => {
           </div>
         </section>
       </div>
-
-      <footer className="fixed inset-x-0 bottom-0 z-30 flex justify-end border-t border-slate-200 bg-white px-4 py-3 shadow-lg md:left-64 md:px-8">
-        <button
-          onClick={handleSubmit}
-          disabled={saving}
-          className="inline-flex cursor-pointer items-center w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60 sm:w-56"
-        >
-          <Save size={18} />
-          {saving ? 'Saving...' : 'Save All Changes'}
-        </button>
-      </footer>
     </div>
   );
 };

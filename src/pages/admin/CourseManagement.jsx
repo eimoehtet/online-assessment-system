@@ -158,12 +158,10 @@ const CourseManagement = () => {
                         <span className="slider round"></span>
                       </label>
                     </button>
-                    </div>
-                  </td>
-                  <td>
-                    <button onClick={() => window.location.href = `/admin/courses/${course.id}/students`} className="rounded-sm p-2 transition border border-red-600 hover:bg-red-200 cursor-pointer" title="Manage students">
+                    <button onClick={() => window.location.href = `/admin/courses/${course.id}/students`} className="rounded-sm p-2 transition hover:text-blue-600 hover:underline cursor-pointer" title="Manage students">
                       <span className="text-xs font-semibold">Add Students</span>
                     </button>
+                    </div>
                   </td>
                 </tr>
               ))

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { apiRoutes } from '../../api/routes';
 import { SquarePen, Trash2, UserPlus, KeyIcon, ChevronDown } from 'lucide-react';
 import { useParams } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 const StudentList = () => {
   const [students, setStudents] = useState([]);
@@ -13,7 +14,8 @@ const StudentList = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const [nameSearch, setNameSearch] = useState("");
-  const teacherId = localStorage.getItem('userId');
+  const { user } = useAuth();
+  const teacherId = user?.id;
   const { quizId } = useParams();
 
 

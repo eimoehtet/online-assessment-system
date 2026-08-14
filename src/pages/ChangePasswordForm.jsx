@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {apiRoutes} from '../api/routes';
 import { Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const ChangePasswordForm = () => {
+  const { logout } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
@@ -11,9 +13,6 @@ const ChangePasswordForm = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const userId = localStorage.getItem('userId'); 
-
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -25,12 +24,13 @@ const ChangePasswordForm = () => {
     }
 
     try {
-      const response = await apiRoutes.changePassword(userId, currentPassword, newPassword);
+      const response = await apiRoutes.changePassword(currentPassword, newPassword);
       if (response.data.success) {
-        setSuccessMessage('Password changed successfully.');
+        setSuccessMessage('Password changed successfully. Please sign in again.');
         setCurrentPassword('');
         setNewPassword('');
         setConfirmNewPassword('');
+        await logout();
       } else {
         setError(response.data.message || 'Failed to change password.');
       }
@@ -42,7 +42,7 @@ const ChangePasswordForm = () => {
   return (
     <div className="max-w-md mt-10 p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-2xl font-semibold mb-4">Change Password</h2>
-      {/* {error && <div className="mb-4 text-red-600">{error}</div>} */}
+      {error && <div className="mb-4 text-red-600">{error}</div>}
       {successMessage && <div className="mb-4 text-blue-600">{successMessage}</div>}
       <form onSubmit={handleSubmit}>
         <div className="mb-4">

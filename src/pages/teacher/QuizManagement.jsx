@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiRoutes } from '../../api/routes';
+import { useAuth } from '../../context/AuthContext';
 import { Plus, Edit2, Trash2, Clock, Users } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -9,7 +10,8 @@ const QuizManagement = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const teacherId = localStorage.getItem('userId');
+  const { user } = useAuth();
+  const teacherId = user?.id;
 
   async function fetchData() {
     try {
@@ -24,7 +26,7 @@ const QuizManagement = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [teacherId]);
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this quiz?')) {
