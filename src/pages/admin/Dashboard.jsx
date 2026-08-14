@@ -2,7 +2,7 @@ import { useAuth } from '../../context/AuthContext';
 import {useNavigate} from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { apiRoutes } from '../../api/routes';
-import dateFormat from './../dateformat';
+import dateFormat from "../dateFormat";
 
 const AdminDashboard = () => {
   const { user } = useAuth();
