@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { apiRoutes } from '../../api/routes';
 import { SquarePen, Trash2, BookPlus } from 'lucide-react';
+import { Link } from "react-router-dom";
 
 const CourseManagement = () => {
   const [courses, setCourses] = useState([]);
@@ -158,9 +159,7 @@ const CourseManagement = () => {
                         <span className="slider round"></span>
                       </label>
                     </button>
-                    <button onClick={() => window.location.href = `/admin/courses/${course.id}/students`} className="rounded-sm p-2 transition hover:text-blue-600 hover:underline cursor-pointer" title="Manage students">
-                      <span className="text-xs font-semibold">Add Students</span>
-                    </button>
+                      <Link to={`/admin/courses/${course.id}/students`} className="text-xs font-semibold">Add Students</Link>
                     </div>
                   </td>
                 </tr>
