@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { apiRoutes } from '../../api/routes';
 import { FileText, Clock, Play, AlertCircle, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
+import LoadingIndicator from '../../components/ui/LoadingIndicator';
 
 const StudentQuizzes = () => {
   const { courseId } = useParams();
@@ -54,8 +55,6 @@ const StudentQuizzes = () => {
     }
   };
 
-  if (loading) return <div className="text-sm text-slate-600">Loading quizzes...</div>;
-
   return (
     <div className="mx-auto max-w-7xl">
       <div className="mb-8 flex items-center gap-3">
@@ -68,7 +67,7 @@ const StudentQuizzes = () => {
       {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
 
       <div className="space-y-4">
-        {quizzes.length === 0 ? (
+        {loading ? <LoadingIndicator label="Loading quizzes…" /> : quizzes.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-slate-500">
             <FileText size={48} className="mx-auto mb-4" />
             <p className="text-sm">No active quizzes available for this course at the moment.</p>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { apiRoutes } from '../../api/routes';
+import LoadingIndicator from '../../components/ui/LoadingIndicator';
 import { useAuth } from '../../context/AuthContext';
 import { 
   Save, 
@@ -253,7 +254,7 @@ const QuizEditor = () => {
     }
   };
 
-  if (loading) return <div className="text-sm text-slate-600">Loading Unified Editor...</div>;
+  if (loading) return <LoadingIndicator label="Loading quiz editor…" />;
 
   return (
     <div className="mx-auto max-w-7xl pb-24">

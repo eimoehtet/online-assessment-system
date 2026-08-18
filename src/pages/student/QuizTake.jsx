@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiRoutes } from '../../api/routes';
+import LoadingIndicator from '../../components/ui/LoadingIndicator';
 import { 
   Clock, 
   AlertTriangle, 
@@ -244,7 +245,7 @@ const QuizTake = () => {
     }
   };
 
-  if (loading) return <div className="text-sm text-slate-600">Preparing your quiz environment...</div>;
+  if (loading) return <LoadingIndicator label="Preparing your quiz environment…" className="min-h-screen" />;
   if (error) return <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>;
   if (questions.length === 0) return <div className="text-sm text-slate-600">No questions found for this quiz.</div>;
 

@@ -4,6 +4,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import ppiuLogo from '../../assets/ppiu-logo.png';
 import { Eye, EyeOff } from 'lucide-react';
+import LoadingIndicator from '../../components/ui/LoadingIndicator';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -16,7 +17,7 @@ const Login = () => {
   const location = useLocation();
 
   if (authLoading) {
-    return <div className="grid min-h-screen place-items-center bg-slate-50 text-sm text-slate-600">Restoring session...</div>;
+    return <LoadingIndicator label="Restoring your session…" className="min-h-screen bg-slate-50" />;
   }
 
   if (user) {

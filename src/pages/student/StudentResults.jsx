@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { apiRoutes } from '../../api/routes';
 import { CheckCircle2, CheckSquare, Trophy, FileText, AlertCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import LoadingIndicator from '../../components/ui/LoadingIndicator';
 
 const StudentResults = () => {
   const [submissions, setSubmissions] = useState([]);
@@ -45,8 +46,6 @@ const StudentResults = () => {
     ? (answer.teacher_points_awarded ?? 0)
     : (answer.points_awarded ?? 0);
 
-  if (loading) return <div className="text-sm text-slate-600">Loading your results...</div>;
-
   return (
     <div className="mx-auto max-w-7xl">
       <div className="mb-8">
@@ -57,7 +56,7 @@ const StudentResults = () => {
       {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
 
       <div className="space-y-5">
-        {submissions.length === 0 ? (
+        {loading ? <LoadingIndicator label="Loading your results…" /> : submissions.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-slate-500">
             <Trophy size={48} className="mx-auto mb-4" />
             <p className="text-sm">You haven't completed any quizzes yet.</p>

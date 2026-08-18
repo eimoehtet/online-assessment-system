@@ -4,6 +4,7 @@ import { apiRoutes } from '../../api/routes';
 import { useAuth } from '../../context/AuthContext';
 import { Plus, Edit2, Trash2, Clock, Users } from 'lucide-react';
 import { format } from 'date-fns';
+import LoadingIndicator from '../../components/ui/LoadingIndicator';
 
 const QuizManagement = () => {
   const [quizzes, setQuizzes] = useState([]);
@@ -39,8 +40,6 @@ const QuizManagement = () => {
     }
   };
 
-  if (loading) return <div className="text-sm text-slate-600">Loading quizzes...</div>;
-
   return (
     <div className="mx-auto max-w-7xl">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -57,7 +56,7 @@ const QuizManagement = () => {
       {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
 
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {quizzes.length === 0 ? (
+        {loading ? <LoadingIndicator label="Loading quizzes…" className="col-span-full" /> : quizzes.length === 0 ? (
           <p className="col-span-full rounded-xl border border-dashed border-slate-300 p-10 text-center text-slate-500">
             No quizzes found. Create your first quiz to get started!
           </p>
