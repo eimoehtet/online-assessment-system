@@ -20,7 +20,7 @@ const StudentQuizzes = () => {
           q => q.course_id === parseInt(courseId) && q.status === 'PUBLISHED'
         ).map(q => ({
           ...q,
-          deadlinePassed: new Date(q.time_limit).getTime() <= fetchedAt
+          deadlinePassed: new Date(q.end_date).getTime() <= fetchedAt
         }));
         setQuizzes(courseQuizzes);
       } catch {
@@ -85,8 +85,14 @@ const StudentQuizzes = () => {
                   <div className="mt-2 flex flex-col gap-2 text-sm text-slate-600 sm:flex-row sm:gap-6">
                     <div className="flex items-center gap-1">
                       <Clock size={14} />
-                      <span>Deadline: {format(new Date(quiz.time_limit), 'PPp')}</span>
+                      <span>Deadline: {format(new Date(quiz.end_date), 'PPp')}</span>
                     </div>
+                    {quiz.time_limit && (
+                      <div className="flex items-center gap-1">
+                        <Clock size={14} />
+                        <span>Time limit: {quiz.time_limit} minutes</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-1">
                       <AlertCircle size={14} />
                       <span>Attempts: {quiz.allowed_attempts} max</span>

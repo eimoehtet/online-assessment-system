@@ -81,11 +81,15 @@ const QuizManagement = () => {
               <div className="space-y-2 text-sm text-slate-600">
                 <div className="flex items-center gap-2">
                   <Clock size={16} />
-                  <span>Start Date: {format(new Date(quiz.start_date), 'PPp')}</span>
+                  <span>Start Date: {format(new Date(quiz.publishedAt), 'PPp')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock size={16} />
                   <span>End Date: {format(new Date(quiz.end_date), 'PPp')}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock size={16} />
+                  <span>Time Limit: {quiz.time_limit ? `${quiz.time_limit} minutes` : 'None'}</span>
                 </div>
                 <div className="flex items-center gap-2 w-fit bg-red-100 px-2 py-1 rounded-lg cursor-pointer hover:underline hover:text-blue-600" onClick={() => navigate(`/teacher/quizzes/students/${quiz.id}`)}>
                   <Users size={16} />

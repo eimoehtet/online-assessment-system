@@ -1,7 +1,5 @@
-import React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { apiRoutes } from '../../api/routes';
-import { SquarePen, Trash2, UserPlus, KeyIcon, ChevronDown } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
@@ -9,7 +7,6 @@ const StudentList = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [showResetPasswordModal, setShowResetPasswordModal] = useState([false, null]);
   const [attendance, setAttendance] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
@@ -17,14 +14,16 @@ const StudentList = () => {
   const { user } = useAuth();
   const teacherId = user?.id;
   const { quizId } = useParams();
+  const studentRequestId = useRef(0);
 
 
-  async function fetchStudents() {
+  async function fetchStudents(page) {
+    const requestId = ++studentRequestId.current;
     try {
-      const response = await apiRoutes.getStudentsByQuizIdAndTeacherId(quizId, teacherId, { page: currentPage });
+      const response = await apiRoutes.getStudentsByQuizIdAndTeacherId(quizId, teacherId, { page });
+      if (requestId !== studentRequestId.current) return;
       setStudents(response.data.data || []);
       setTotalPages(response.data.meta.totalPages || 1);
-      setCurrentPage(response.data.meta.page || 1);
     } catch {
       setError('Failed to fetch students');
     } finally {
@@ -45,37 +44,32 @@ const StudentList = () => {
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
-    fetchStudents();
   };
 
   useEffect(() => {
+    // The async fetch updates state only after the request resolves.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     getAttendance(quizId);
-    fetchStudents();
-  }, []);
+  }, [quizId]);
 
+  useEffect(() => {
+    // The request-id guard prevents stale async responses from updating this page.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (teacherId) fetchStudents(currentPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, quizId, teacherId]);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
 
   const handleToggleStatus = async (student_id, status) => {
     try {
       await apiRoutes.updateQuizAttendance({ quiz_id: quizId, student_id, status });
-      fetchStudents();
-      getAttendance(quizId);
+      await Promise.all([fetchStudents(currentPage), getAttendance(quizId)]);
     } catch {
       alert('Failed to toggle user status');
     };
   };
 
   if (loading) return <div className="text-sm text-slate-600">Loading students...</div>;
-
-  const filteredStudents = students?.filter((student) => {
-    const nameMatch = student.student.name?.toLowerCase()
-      .includes(nameSearch.toLowerCase());
-    return nameMatch;
-  });
 
   const attendanceMap = new Map(
   attendance.map(a => [a.student_id, a.status])
@@ -87,6 +81,10 @@ const mergedStudents = students.map(student => {
     attendanceStatus: attendanceMap.get(student.student_id) || false,
   };
 });
+
+  const filteredStudents = mergedStudents.filter((student) =>
+    student.student.name?.toLowerCase().includes(nameSearch.toLowerCase()),
+  );
 
   return (
     <div className="mx-auto max-w-7xl">
@@ -117,7 +115,7 @@ const mergedStudents = students.map(student => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 text-sm">
-            {mergedStudents.map(student => (
+            {filteredStudents.map(student => (
               <tr key={student.id} className="hover:bg-slate-50">
                 <td className="whitespace-nowrap px-4 py-4 text-slate-600">{mergedStudents.indexOf(student) + 1}</td>
                 <td className="whitespace-nowrap px-4 py-4 font-medium text-slate-950">{student.student.name}</td>
@@ -125,15 +123,6 @@ const mergedStudents = students.map(student => {
                 <td className="whitespace-nowrap px-4 py-4 text-slate-600">{student.student.student_id || '-'}</td>
                 <td className="whitespace-nowrap px-4 py-4">
                   <div className="flex gap-2">
-                    <button onClick={() => setShowModal([true, student])} className="rounded-lg p-2 text-yellow-600 transition hover:bg-yellow-50 cursor-pointer" title="Edit user">
-                      <SquarePen size={16} />
-                    </button>
-                    <button onClick={() => handleDelete(student.student.id)} className="rounded-lg p-2 text-red-600 transition hover:bg-red-50 cursor-pointer" title="Delete user">
-                      <Trash2 size={16} />
-                    </button>
-                    <button onClick={() => setShowResetPasswordModal([true, student])} className="rounded-lg p-2 text-yellow-600 transition hover:bg-yellow-50 cursor-pointer" title="Change password">
-                      <KeyIcon size={16} />
-                    </button>
                     {/* Checkbox */}
                     <button title="Toggle status">
                       <label className="checkbox">
@@ -164,33 +153,6 @@ const mergedStudents = students.map(student => {
         </div>
         </div>
       </div>
-      {showResetPasswordModal[0] && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 p-4">
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-slate-200 bg-white p-6 shadow-xl">
-            <h2 className="text-xl font-semibold text-slate-950">Reset Password for {showResetPasswordModal[1].name}</h2>
-            <form onSubmit={async (e) => {
-              e.preventDefault();
-              try {
-                await apiRoutes.resetPassword(showResetPasswordModal[1].id, formData.password);
-                setShowResetPasswordModal([false, null]);
-                setFormData(initialFormData);
-              } catch (err) {
-                setError(err?.response?.data?.message || 'Failed to reset password');
-              }
-            }} className="mt-6 space-y-4">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">New Password</label>
-                <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="password" name="password" value={formData.password} onChange={handleInputChange} required />
-              </div>
-              <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowResetPasswordModal([false, null])} className="flex-1 rounded-lg bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-300 cursor-pointer">Cancel</button>
-                <button type="submit" className="flex-1 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500 cursor-pointer">Reset Password</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 };

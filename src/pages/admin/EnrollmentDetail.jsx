@@ -38,12 +38,15 @@ const EnrollmentDetail = () => {
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
-    fetchEnrollment(page);
   };
 
   useEffect(() => {
+    // The async fetch updates state only after the request resolves.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchEnrollment(currentPage);
-  }, [courseId]);
+    // fetchEnrollment intentionally remains local so mutation handlers can refresh the current page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseId, currentPage]);
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];

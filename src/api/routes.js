@@ -1,6 +1,7 @@
 import apiClient from "./client";
 
 export const apiRoutes = {
+  getDashboardStats: () => apiClient.get("/dashboard/stats"),
   // Auth
   login: (credentials) => apiClient.post("/users/login", credentials),
   refresh: (csrfToken) => apiClient.post("/users/refresh", null, { headers: { "X-CSRF-Token": csrfToken } }),
@@ -24,7 +25,7 @@ export const apiRoutes = {
   // Courses
   getCourses: (params) => apiClient.get("/courses", { params }),
   getCourseById: (id) => apiClient.get(`/courses/${id}`),
-  getCourseByTeacherId: (teacherId) => apiClient.get(`/courses/teacher/${teacherId}`),
+  getCourseByTeacherId: (teacherId, params) => apiClient.get(`/courses/teacher/${teacherId}`, { params }),
   createCourse: (courseData) => apiClient.post("/courses", courseData),
   updateCourse: (id, courseData) => apiClient.patch(`/courses/${id}`, courseData),
   deleteCourse: (id) => apiClient.delete(`/courses/${id}`),
@@ -37,7 +38,7 @@ export const apiRoutes = {
   createQuiz: (quizData) => apiClient.post("/quizzes", quizData),
   updateQuiz: (id, quizData) => apiClient.put(`/quizzes/${id}`, quizData),
   deleteQuiz: (id) => apiClient.delete(`/quizzes/${id}`),
-  getQuizzesReportByAdmin: () => apiClient.get("/quizzes/report/all"),
+  getQuizzesReportByAdmin: (params) => apiClient.get("/quizzes/report/all", { params }),
 
   // Quiz Attendance
   getQuizAttendance: (quiz_id) => apiClient.get(`/quiz_attendances/${quiz_id}`),
@@ -57,7 +58,7 @@ export const apiRoutes = {
   deleteEnrollment: (id) => apiClient.delete(`/enrollments/${id}`),
   getEnrollmentsByCourse: (courseId, params) => apiClient.get(`/enrollments/courses/${courseId}`, { params }),
   getStudentsByQuizIdAndTeacherId: (quizId, teacherId, params) => apiClient.get(`/quizzes/${quizId}/teacher/${teacherId}`, { params }),
-  getEnrollmentsByStudent: (studentId) => apiClient.get(`/enrollments/students/${studentId}`),
+  getEnrollmentsByStudent: (studentId, params) => apiClient.get(`/enrollments/students/${studentId}`, { params }),
 
   // Submissions
   getSubmissions: () => apiClient.get("/submissions"),

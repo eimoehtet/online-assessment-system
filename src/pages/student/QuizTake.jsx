@@ -4,11 +4,11 @@ import { apiRoutes } from '../../api/routes';
 import { 
   Clock, 
   AlertTriangle, 
-  ChevronLeft, 
-  ChevronRight, 
   Send,
   Maximize2
 } from 'lucide-react';
+
+const getCurrentTimestamp = () => Date.now();
 
 const QuizTake = () => {
   const { submissionId } = useParams();
@@ -17,7 +17,6 @@ const QuizTake = () => {
   const [loading, setLoading] = useState(true);
   const [quiz, setQuiz] = useState(null);
   const [questions, setQuestions] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState({}); // { questionId: value }
   const [timeLeft, setTimeLeft] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,11 +24,10 @@ const QuizTake = () => {
 
   // Behavioral tracking refs
   const questionStartTime = useRef(0);
+  const activeQuestionId = useRef(null);
   const timeoutSubmitStarted = useRef(false);
   const answerSaveTimers = useRef(new Map());
   const answerSaveQueues = useRef(new Map());
-
-  const currentQuestion = questions[currentIndex];
 
   const fetchQuizData = useCallback(async () => {
     try {
@@ -40,7 +38,9 @@ const QuizTake = () => {
       setQuiz(quizRes.data);
       
       const questionsRes = await apiRoutes.getQuestions(sub.quiz_id);
-      setQuestions(questionsRes.data || []);
+      const fetchedQuestions = questionsRes.data || [];
+      setQuestions(fetchedQuestions);
+      activeQuestionId.current = null;
 
       // Initialize answers from existing ones if any
       const existingAnswers = {};
@@ -49,23 +49,26 @@ const QuizTake = () => {
       });
       setAnswers(existingAnswers);
 
-      // Setup timer (mocking 30 mins if not specified in quiz? 
-      // Actually schema has time_limit as DateTime, usually used as a deadline.
-      // But for a quiz take, we might need a duration. 
-      // Let's assume 30 minutes for now or use the deadline difference.)
-      const deadline = new Date(quizRes.data.time_limit).getTime();
-      const now = Date.now();
-      const diff = Math.max(0, Math.floor((deadline - now) / 1000));
+      // The attempt ends at the quiz deadline or when its optional duration
+      // expires, whichever happens first.
+      const deadline = new Date(quizRes.data.end_date).getTime();
+      const now = getCurrentTimestamp();
+      const deadlineSeconds = Math.max(0, Math.floor((deadline - now) / 1000));
+      const startedAt = new Date(sub.submitted_at).getTime();
+      const durationSeconds = quizRes.data.time_limit == null
+        ? Number.POSITIVE_INFINITY
+        : Math.max(0, Math.floor((startedAt + quizRes.data.time_limit * 60_000 - now) / 1000));
+      const remainingSeconds = Math.min(deadlineSeconds, durationSeconds);
       timeoutSubmitStarted.current = false;
 
-      if (!Number.isFinite(deadline) || diff <= 0) {
-        setError('This quiz deadline has passed.');
+      if (!Number.isFinite(deadline) || remainingSeconds <= 0) {
+        setError(deadlineSeconds <= 0 ? 'This quiz deadline has passed.' : 'The time limit for this quiz has expired.');
         setTimeLeft(null);
         return;
       }
 
-      setTimeLeft(diff > 1800 ? 1800 : diff); // Cap at 30 mins for demo if deadline is far
-      questionStartTime.current = Date.now();
+      setTimeLeft(remainingSeconds);
+      questionStartTime.current = 0;
 
     } catch {
       setError('Failed to load quiz');
@@ -81,18 +84,18 @@ const QuizTake = () => {
   }, [fetchQuizData]);
 
   // Behavior Logging Utility
-  const logBehavior = useCallback(async (eventType, metadata = {}) => {
-    if (!currentQuestion) return;
+  const logBehavior = useCallback(async (eventType, metadata = {}, questionId = activeQuestionId.current || questions[0]?.id) => {
+    if (!questionId) return;
     try {
       await apiRoutes.recordBehavior(submissionId, {
-        question_id: currentQuestion.id,
+        question_id: questionId,
         event_type: eventType,
         metadata
       });
     } catch {
       console.error('Failed to log behavior:', eventType);
     }
-  }, [submissionId, currentQuestion]);
+  }, [questions, submissionId]);
 
   // Event Listeners for behavior tracking
   useEffect(() => {
@@ -152,26 +155,36 @@ const QuizTake = () => {
     }, 400));
   };
 
-  const nextQuestion = () => {
-    if (currentIndex < questions.length - 1) {
-      // Log time spent on current question before moving
-      const timeSpent = Math.floor((Date.now() - questionStartTime.current) / 1000);
-      logBehavior('TIME_SPENT_PER_Q', { seconds: timeSpent });
-      
-      setCurrentIndex(prev => prev + 1);
-      questionStartTime.current = Date.now();
+  const focusQuestion = (questionId) => {
+    if (activeQuestionId.current === questionId) return;
+
+    const previousQuestionId = activeQuestionId.current;
+    if (previousQuestionId && questionStartTime.current) {
+      const timeSpent = Math.floor((getCurrentTimestamp() - questionStartTime.current) / 1000);
+      logBehavior('TIME_SPENT_PER_Q', { seconds: timeSpent }, previousQuestionId);
     }
+
+    activeQuestionId.current = questionId;
+    questionStartTime.current = getCurrentTimestamp();
   };
 
-  const prevQuestion = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
-      questionStartTime.current = Date.now();
-    }
-  };
-
-  const finishQuiz = useCallback(async () => {
+  const finishQuiz = useCallback(async ({ skipConfirmation = false } = {}) => {
     if (isSubmitting) return;
+
+    if (!skipConfirmation) {
+      const unansweredCount = questions.filter((question) => {
+        const answer = answers[question.id];
+        return answer == null || String(answer).trim() === '';
+      }).length;
+
+      if (unansweredCount > 0) {
+        const confirmed = window.confirm(
+          `You have ${unansweredCount} unanswered question${unansweredCount === 1 ? '' : 's'}. Submit anyway?`
+        );
+        if (!confirmed) return;
+      }
+    }
+
     setIsSubmitting(true);
     
     try {
@@ -179,8 +192,11 @@ const QuizTake = () => {
       answerSaveTimers.current.forEach((timer) => clearTimeout(timer));
       answerSaveTimers.current.clear();
       // Final time log
-      const timeSpent = Math.floor((Date.now() - questionStartTime.current) / 1000);
-      await logBehavior('TIME_SPENT_PER_Q', { seconds: timeSpent });
+      const focusedQuestionId = activeQuestionId.current || questions[0]?.id;
+      if (focusedQuestionId && questionStartTime.current) {
+        const timeSpent = Math.floor((getCurrentTimestamp() - questionStartTime.current) / 1000);
+        await logBehavior('TIME_SPENT_PER_Q', { seconds: timeSpent }, focusedQuestionId);
+      }
       await apiRoutes.finishSubmission(submissionId, {
         answers: Object.entries(answers).map(([question_id, student_answer]) => ({
           question_id: Number(question_id),
@@ -195,14 +211,14 @@ const QuizTake = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [answers, isSubmitting, logBehavior, navigate, submissionId]);
+  }, [answers, isSubmitting, logBehavior, navigate, questions, submissionId]);
 
   // Timer Effect
   useEffect(() => {
     if (timeLeft === null || timeLeft <= 0) {
-      if (timeLeft === 0 && currentQuestion && !timeoutSubmitStarted.current) {
+      if (timeLeft === 0 && questions.length > 0 && !timeoutSubmitStarted.current) {
         timeoutSubmitStarted.current = true;
-        const submitTimer = setTimeout(finishQuiz, 0);
+        const submitTimer = setTimeout(() => finishQuiz({ skipConfirmation: true }), 0);
 
         return () => clearTimeout(submitTimer);
       }
@@ -214,7 +230,7 @@ const QuizTake = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [currentQuestion, finishQuiz, timeLeft]);
+  }, [finishQuiz, questions.length, timeLeft]);
 
   const formatTime = (seconds) => {
     const m = Math.floor(seconds / 60);
@@ -230,7 +246,12 @@ const QuizTake = () => {
 
   if (loading) return <div className="text-sm text-slate-600">Preparing your quiz environment...</div>;
   if (error) return <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>;
-  if (!currentQuestion) return <div className="text-sm text-slate-600">No questions found for this quiz.</div>;
+  if (questions.length === 0) return <div className="text-sm text-slate-600">No questions found for this quiz.</div>;
+
+  const answeredCount = questions.filter((question) => {
+    const answer = answers[question.id];
+    return answer != null && String(answer).trim() !== '';
+  }).length;
 
   return (
     <div className="mx-auto max-w-4xl pb-8">
@@ -238,7 +259,7 @@ const QuizTake = () => {
       <header className="sticky top-4 z-20 mb-6 flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-xl font-semibold text-slate-950">{quiz.title}</h2>
-          <p className="mt-1 text-sm text-slate-500">Question {currentIndex + 1} of {questions.length}</p>
+          <p className="mt-1 text-sm text-slate-500">{answeredCount} of {questions.length} answered</p>
         </div>
 
         <div className="flex items-center gap-4">
@@ -258,100 +279,79 @@ const QuizTake = () => {
         <p>Your browser activities (tab switching, copy-paste) are being monitored for academic integrity.</p>
       </div>
 
-      {/* Question Card */}
-      <main className="flex min-h-[400px] flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <div className="mb-8">
-          <span className="mb-2 block text-sm font-bold text-blue-600">
-            {currentQuestion.points} Points • {currentQuestion.question_type}
-          </span>
-          <h3 className="text-2xl font-semibold leading-snug text-slate-950">{currentQuestion.question_text}</h3>
-        </div>
-
-        <div className="flex-1">
-          {/* MCQ / True False */}
-          {(currentQuestion.question_type === 'MCQ' || currentQuestion.question_type === 'TRUE_FALSE') && (
-            <div className="space-y-3">
-              {currentQuestion.options.map((option) => (
-                <label
-                  key={option.id}
-                  className={`flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition ${
-                    answers[currentQuestion.id] === option.option_text
-                      ? 'border-blue-500 bg-red-50'
-                      : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name={`q-${currentQuestion.id}`}
-                    value={option.option_text}
-                    checked={answers[currentQuestion.id] === option.option_text}
-                    onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
-                    className="size-5 accent-blue-600"
-                  />
-                  <span className="text-lg text-slate-800">{option.option_text}</span>
-                </label>
-              ))}
-            </div>
-          )}
-
-          {/* Short Answer */}
-          {currentQuestion.question_type === 'SHORT_Q' && (
-            <input
-              type="text"
-              value={answers[currentQuestion.id] || ''}
-              onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
-              placeholder="Type your answer here..."
-              className="w-full rounded-lg border border-slate-300 px-4 py-3 text-lg outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-            />
-          )}
-
-          {/* Long Answer */}
-          {currentQuestion.question_type === 'LONG_Q' && (
-            <textarea
-              value={answers[currentQuestion.id] || ''}
-              onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
-              placeholder="Write your detailed answer here..."
-              className="min-h-64 w-full rounded-lg border border-slate-300 px-4 py-3 text-lg leading-relaxed outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-            />
-          )}
-        </div>
-
-        {/* Navigation Footer */}
-        <footer className="mt-12 flex flex-col gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <button
-            onClick={prevQuestion}
-            disabled={currentIndex === 0}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+      <main className="space-y-6">
+        {questions.map((question, index) => (
+          <section
+            key={question.id}
+            onClick={() => focusQuestion(question.id)}
+            onFocus={() => focusQuestion(question.id)}
+            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
           >
-            <ChevronLeft size={20} />
-            Previous
-          </button>
+            <div className="mb-6">
+              <span className="mb-2 block text-sm font-bold text-blue-600">
+                Question {index + 1} • {question.points} Points • {question.question_type}
+              </span>
+              <h3 className="text-xl font-semibold leading-snug text-slate-950 sm:text-2xl">{question.question_text}</h3>
+            </div>
 
-          {currentIndex === questions.length - 1 ? (
-            <button
-              onClick={finishQuiz}
-              disabled={isSubmitting}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <Send size={20} />
-              {isSubmitting ? 'Submitting...' : 'Finish & Submit'}
-            </button>
-          ) : (
-            <button
-              onClick={nextQuestion}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-500"
-            >
-              Next
-              <ChevronRight size={20} />
-            </button>
-          )}
+            {(question.question_type === 'MCQ' || question.question_type === 'TRUE_FALSE') && (
+              <div className="space-y-3">
+                {question.options.map((option) => (
+                  <label
+                    key={option.id}
+                    className={`flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition ${
+                      answers[question.id] === option.option_text
+                        ? 'border-blue-500 bg-red-50'
+                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name={`q-${question.id}`}
+                      value={option.option_text}
+                      checked={answers[question.id] === option.option_text}
+                      onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+                      className="size-5 accent-blue-600"
+                    />
+                    <span className="text-lg text-slate-800">{option.option_text}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+
+            {question.question_type === 'SHORT_Q' && (
+              <input
+                type="text"
+                value={answers[question.id] || ''}
+                onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+                placeholder="Type your answer here..."
+                className="w-full rounded-lg border border-slate-300 px-4 py-3 text-lg outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+              />
+            )}
+
+            {question.question_type === 'LONG_Q' && (
+              <textarea
+                value={answers[question.id] || ''}
+                onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+                placeholder="Write your detailed answer here..."
+                className="min-h-64 w-full rounded-lg border border-slate-300 px-4 py-3 text-lg leading-relaxed outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+              />
+            )}
+          </section>
+        ))}
+
+        <footer className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-6">
+          <p className="text-sm font-medium text-slate-600">{answeredCount} of {questions.length} questions answered</p>
+          <button
+            onClick={() => finishQuiz()}
+            disabled={isSubmitting}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Send size={20} />
+            {isSubmitting ? 'Submitting...' : 'Finish & Submit'}
+          </button>
         </footer>
       </main>
-
-      {/* Progress Bar */}
-      <div className="mt-8 h-2 overflow-hidden rounded-full bg-slate-200">
-        <div className="h-full bg-red-600 transition-[width] duration-300" style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}></div>
-      </div>
     </div>
   );
 };

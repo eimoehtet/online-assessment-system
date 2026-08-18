@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiRoutes } from '../../api/routes';
 import { FileText, CheckSquare, PlusCircle } from 'lucide-react';
@@ -10,22 +10,9 @@ const TeacherDashboard = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
 
 
-  const fetchStats = async () => {
-    try {
-      const quizzesRes = await apiRoutes.getQuizzes();
-      const submissionsRes = await apiRoutes.getSubmissions();
-      setStats({
-        quizzes: quizzesRes.data.data?.length || 0,
-        submissions: submissionsRes.data.data?.length || 0
-      });
-    } catch (err) {
-      console.error('Failed to fetch teacher stats', err);
-    }
-  };
-  const fetchAssignedCourses = async () => {
+  const fetchDashboard = async () => {
     const teacherId = user?.id;
     if (!teacherId) {
       setError("Teacher ID is unavailable.");
@@ -33,8 +20,12 @@ const TeacherDashboard = () => {
       return;
     }
     try {
-      const response = await apiRoutes.getCourseByTeacherId(teacherId);
-      setCourses(response.data.courses || []);
+      const [statsResponse, coursesResponse] = await Promise.all([
+        apiRoutes.getDashboardStats(),
+        apiRoutes.getCourseByTeacherId(teacherId, { limit: 100 }),
+      ]);
+      setStats(statsResponse.data.data);
+      setCourses(coursesResponse.data.courses || []);
     } catch (err) {
       setError(err.message || 'An error occurred while fetching courses.');
     } finally {
@@ -43,9 +34,12 @@ const TeacherDashboard = () => {
   };
 
   useEffect(() => {
-    fetchStats();
-    fetchAssignedCourses();
-  }, []);
+    // The async fetch updates state after its requests resolve.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchDashboard();
+    // fetchDashboard is scoped to this component and keyed by the authenticated user.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
