@@ -1,16 +1,13 @@
 import { useAuth } from '../../context/AuthContext';
-import {useNavigate} from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { apiRoutes } from '../../api/routes';
 import dateFormat from "../dateFormat";
 
 const AdminDashboard = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [totalCourses, setTotalCourses] = useState(0);
   const [totalTeachers, setTotalTeachers] = useState(0);
   const [totalStudents, setTotalStudents] = useState(0);
-  const [totalEnrollments, setTotalEnrollments] = useState(0);
   const [publishedQuizzes, setPublishedQuizzes] = useState([]);
   const [allQuizzes, setAllQuizzes] = useState([]);
   const [totalQuizzes, setTotalQuizzes] = useState(0);
@@ -18,21 +15,14 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const coursesRes = await apiRoutes.getCourses();
-        setTotalCourses(coursesRes.data.meta.total);
-
-        const teachersRes = await apiRoutes.getTeachers();
-        setTotalTeachers(teachersRes.data.data.length);
-
-        const studentsRes = await apiRoutes.getStudents();
-        setTotalStudents(studentsRes.data.data.length);
-
-        const quizzesRes = await apiRoutes.getQuizzes();
-        setTotalQuizzes(quizzesRes.data.meta.total);
-        setAllQuizzes(quizzesRes.data.data); 
-
-        const publishedQuizzes = quizzesRes.data.data.filter((quiz) => quiz.status === "PUBLISHED");
-        setPublishedQuizzes(publishedQuizzes);
+        const response = await apiRoutes.getDashboardStats();
+        const stats = response.data.data;
+        setTotalCourses(stats.courses);
+        setTotalTeachers(stats.teachers);
+        setTotalStudents(stats.students);
+        setTotalQuizzes(stats.quizzes);
+        setPublishedQuizzes(stats.publishedQuizzes || []);
+        setAllQuizzes(stats.recentQuizzes || []);
       } catch (error) {
         console.error('Error fetching data:', error);
       }

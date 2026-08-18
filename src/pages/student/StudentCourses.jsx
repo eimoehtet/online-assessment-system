@@ -15,7 +15,7 @@ const StudentCourses = () => {
   useEffect(() => {
     const fetchEnrollments = async () => {
       try {
-        const res = await apiRoutes.getEnrollmentsByStudent(studentId);
+        const res = await apiRoutes.getEnrollmentsByStudent(studentId, { limit: 100 });
         setEnrollments(res.data.data || []);
       } catch {
         setError('Failed to fetch your courses');

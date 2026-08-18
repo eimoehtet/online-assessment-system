@@ -7,15 +7,17 @@ const Reports = () => {
   const [reportData, setReportData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
 
   useEffect(() => {
     const fetchReportData = async () => {
       setLoading(true);
       try {
-        const res = await apiRoutes.getQuizzesReportByAdmin();
-        console.log("Fetched report data:", res);
+        const res = await apiRoutes.getQuizzesReportByAdmin({ page });
         setReportData(res.data.data);
+        setTotalPages(res.data.meta.totalPages || 1);
       } catch (err) {
         setError(err?.response?.data?.message || "Failed to fetch report data");
       } finally {
@@ -23,7 +25,7 @@ const Reports = () => {
       }
     };
     fetchReportData();
-  }, []);
+  }, [page]);
 
   if (loading) return <div className="text-sm text-slate-600">Loading reports...</div>;
   if (error) return <div className="text-sm text-red-600">{error}</div>;
@@ -51,7 +53,7 @@ const Reports = () => {
             <tbody className="divide-y divide-slate-200 text-sm">
               {reportData.map((report, index) => (
                 <tr key={report.quiz_id} className="hover:bg-slate-50">
-                  <td className="whitespace-nowrap px-4 py-4 text-slate-600">{index + 1}</td>
+                  <td className="whitespace-nowrap px-4 py-4 text-slate-600">{(page - 1) * 10 + index + 1}</td>
                   <td className="whitespace-nowrap px-4 py-4 text-slate-600">{report.quiz_title}</td>
                   <td className="whitespace-nowrap px-4 py-4 text-slate-600">{report.course_name}</td>
                   <td className="whitespace-nowrap px-4 py-4 text-slate-600">{report.teacher_name}</td>
@@ -67,6 +69,22 @@ const Reports = () => {
             </tbody>
           </table>
       </div>
+        <div className="flex justify-center gap-2 p-4">
+          {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNumber) => (
+            <button
+              key={pageNumber}
+              onClick={() => setPage(pageNumber)}
+              disabled={page === pageNumber}
+              className={`rounded-lg px-3 py-1 text-sm font-medium transition ${
+                page === pageNumber
+                  ? 'bg-red-600 text-white'
+                  : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+              }`}
+            >
+              {pageNumber}
+            </button>
+          ))}
+        </div>
     </div>
       ) : (
         <div className="text-sm text-slate-600">No report data available.</div>

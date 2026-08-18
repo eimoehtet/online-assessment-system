@@ -30,6 +30,7 @@ const QuizEditor = () => {
   const [formData, setFormData] = useState({
     title: '',
     course_id: '',
+    end_date: '',
     time_limit: '',
     allowed_attempts: 1,
     status: 'DRAFT',
@@ -42,7 +43,7 @@ const QuizEditor = () => {
 
   const fetchInitialData = async () => {
     try {
-      const coursesRes = await apiRoutes.getCourseByTeacherId(teacher_id);
+      const coursesRes = await apiRoutes.getCourseByTeacherId(teacher_id, { limit: 100 });
       setCourses(coursesRes.data.courses || []);
 
       if (isEditing) {
@@ -55,7 +56,8 @@ const QuizEditor = () => {
         setFormData({
           title: quiz.title,
           course_id: quiz.course_id,
-          time_limit: quiz.time_limit.split('T')[0],
+          end_date: quiz.end_date ? quiz.end_date.slice(0, 16) : '',
+          time_limit: quiz.time_limit ?? '',
           allowed_attempts: quiz.allowed_attempts,
           status: quiz.status,
           questions: questionsRes.data.map(q => ({
@@ -193,7 +195,8 @@ const QuizEditor = () => {
         teacher_id,
         status: formData.status,
         allowed_attempts: parseInt(formData.allowed_attempts),
-        time_limit: new Date(formData.time_limit).toISOString()
+        end_date: new Date(formData.end_date).toISOString(),
+        time_limit: formData.time_limit === '' ? null : parseInt(formData.time_limit, 10)
       };
 
       let quizId = id;
@@ -300,11 +303,11 @@ const QuizEditor = () => {
             </div>
             <div className="mb-4">
               <label className="mb-2 block text-sm font-medium text-slate-700">Deadline</label>
-              <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="date" name="time_limit" value={formData.time_limit} onChange={handleQuizChange} required />
+              <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="datetime-local" name="end_date" value={formData.end_date} onChange={handleQuizChange} required />
             </div>
             <div className="mb-4">
-              <label className="mb-2 block text-sm font-medium text-slate-700">Allowed Attempts</label>
-              <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="number" name="allowed_attempts" value={formData.allowed_attempts} onChange={handleQuizChange} min="1" required />
+              <label className="mb-2 block text-sm font-medium text-slate-700">Time Limit (minutes, optional)</label>
+              <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="number" name="time_limit" value={formData.time_limit} onChange={handleQuizChange} min="1" step="1" placeholder="No time limit" />
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">Status</label>
@@ -420,20 +423,6 @@ const QuizEditor = () => {
                         )}
                       </div>
                     ))}
-                  </div>
-                )}
-
-                {/* Short Answer Section */}
-                {q.question_type === 'SHORT_Q' && (
-                  <div className="mt-5">
-                    <label className="mb-2 block text-sm font-medium text-slate-700">Correct Answer (Exact Match)</label>
-                    <input
-                      type="text"
-                      value={q.correct_answer}
-                      onChange={(e) => handleQuestionChange(qIdx, 'correct_answer', e.target.value)}
-                      placeholder="Enter the correct answer"
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                    />
                   </div>
                 )}
               </div>

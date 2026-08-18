@@ -11,12 +11,8 @@ const StudentDashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const enrollRes = await apiRoutes.getEnrollments();
-        const subRes = await apiRoutes.getSubmissions();
-        setStats({
-          courses: enrollRes.data.data?.length || 0,
-          submissions: subRes.data.data?.length || 0
-        });
+        const response = await apiRoutes.getDashboardStats();
+        setStats(response.data.data);
       } catch {
         console.error('Failed to fetch student stats');
       }
