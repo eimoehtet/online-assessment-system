@@ -12,6 +12,7 @@ import {
   XCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
+import LoadingIndicator from '../../components/ui/LoadingIndicator';
 
 const riskStyles = {
   LOW: 'bg-emerald-50 text-emerald-700',
@@ -183,8 +184,6 @@ const SubmissionDashboard = () => {
     setDetailError('');
   };
 
-  if (loading) return <div className="text-sm text-slate-600">Loading submissions...</div>;
-
   return (
     <div className="mx-auto max-w-7xl">
       <div className="mb-8">
@@ -264,7 +263,7 @@ const SubmissionDashboard = () => {
       </div>
 
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-        {filteredSubmissions.length === 0 ? (
+        {loading ? <LoadingIndicator label="Loading submissions…" /> : filteredSubmissions.length === 0 ? (
           <div className="p-10 text-center text-sm text-slate-500">No submissions match the current filters.</div>
         ) : (
           <div className="overflow-x-auto">
@@ -395,7 +394,7 @@ const SubmissionDashboard = () => {
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Answers</h3>
                 {selectedLoading ? (
-                  <div className="text-sm text-slate-600">Loading answers...</div>
+                  <LoadingIndicator label="Loading answers…" />
                 ) : selectedAnswers.length === 0 ? (
                   <div className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">No answers saved for this submission.</div>
                 ) : (

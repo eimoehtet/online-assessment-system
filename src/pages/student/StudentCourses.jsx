@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiRoutes } from '../../api/routes';
 import { useAuth } from '../../context/AuthContext';
 import { BookOpen, ArrowRight, Book } from 'lucide-react';
+import LoadingIndicator from '../../components/ui/LoadingIndicator';
 
 const StudentCourses = () => {
   const [enrollments, setEnrollments] = useState([]);
@@ -26,8 +27,6 @@ const StudentCourses = () => {
     fetchEnrollments();
   }, [studentId]);
 
-  if (loading) return <div className="text-sm text-slate-600">Loading courses...</div>;
-
   return (
     <div className="mx-auto max-w-7xl">
       <div className="mb-8">
@@ -38,7 +37,7 @@ const StudentCourses = () => {
       {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
 
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-        {enrollments.length === 0 ? (
+        {loading ? <LoadingIndicator label="Loading courses…" className="col-span-full" /> : enrollments.length === 0 ? (
           <div className="col-span-full rounded-xl border border-dashed border-slate-300 p-10 text-center text-slate-500">
             <Book size={48} className="mx-auto mb-4" />
             <p className="text-sm">You are not enrolled in any courses yet.</p>

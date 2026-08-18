@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { apiRoutes } from "../../api/routes";
 import { Eye } from "lucide-react";
 import { Link } from "react-router-dom";
+import { TableLoadingRow } from '../../components/ui/LoadingIndicator';
 
 const Reports = () => {
   const [reportData, setReportData] = useState(null);
@@ -27,13 +28,12 @@ const Reports = () => {
     fetchReportData();
   }, [page]);
 
-  if (loading) return <div className="text-sm text-slate-600">Loading reports...</div>;
   if (error) return <div className="text-sm text-red-600">{error}</div>;
 
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Quiz Report</h1>
-      {reportData && reportData.length > 0 ? (
+      {loading || (reportData && reportData.length > 0) ? (
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200">
@@ -51,7 +51,7 @@ const Reports = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 text-sm">
-              {reportData.map((report, index) => (
+              {loading ? <TableLoadingRow colSpan={9} label="Loading reports…" /> : reportData.map((report, index) => (
                 <tr key={report.quiz_id} className="hover:bg-slate-50">
                   <td className="whitespace-nowrap px-4 py-4 text-slate-600">{(page - 1) * 10 + index + 1}</td>
                   <td className="whitespace-nowrap px-4 py-4 text-slate-600">{report.quiz_title}</td>

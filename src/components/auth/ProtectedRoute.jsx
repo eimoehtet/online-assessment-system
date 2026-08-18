@@ -1,12 +1,13 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import LoadingIndicator from '../ui/LoadingIndicator';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <LoadingIndicator label="Restoring your session…" className="min-h-screen" />;
   }
 
   if (!user) {

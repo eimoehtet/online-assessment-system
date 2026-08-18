@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { apiRoutes } from '../../api/routes';
 import { SquarePen, Trash2, BookPlus } from 'lucide-react';
 import { Link } from "react-router-dom";
+import { TableLoadingRow } from '../../components/ui/LoadingIndicator';
 
 const CourseManagement = () => {
   const [courses, setCourses] = useState([]);
@@ -102,8 +103,6 @@ const CourseManagement = () => {
     }
   };
 
-  if (loading) return <div className="text-sm text-slate-600">Loading courses...</div>;
-
   return (
     <div className="mx-auto max-w-7xl">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -129,7 +128,7 @@ const CourseManagement = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 text-sm">
-            {courses.length === 0 ? (
+            {loading ? <TableLoadingRow colSpan={5} label="Loading courses…" /> : courses.length === 0 ? (
               <tr><td colSpan="5" className="px-4 py-10 text-center text-slate-500">No courses found.</td></tr>
             ) : (
               courses.map(course => (

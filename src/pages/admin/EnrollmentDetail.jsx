@@ -4,6 +4,7 @@ import { apiRoutes } from "../../api/routes";
 import Papa from "papaparse";
 import { ChevronDown } from "lucide-react";
 import parseDateOfBirth from "../dateFormat";
+import { TableLoadingRow } from '../../components/ui/LoadingIndicator';
 
 const EnrollmentDetail = () => {
   const [enrollment, setEnrollment] = useState(null);
@@ -143,16 +144,8 @@ const EnrollmentDetail = () => {
     return nameMatch && shiftMatch;
   });
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
   if (error) {
     return <div>Error: {error}</div>;
-  }
-
-  if (!enrollment) {
-    return <div>No enrollment found.</div>;
   }
 
   return (
@@ -219,7 +212,7 @@ const EnrollmentDetail = () => {
           </thead>
 
           <tbody className="divide-y divide-slate-100 text-sm text-slate-500">
-            {filteredEnrollments?.map((enroll, index) => (
+            {loading ? <TableLoadingRow colSpan={9} label="Loading enrolled students…" /> : filteredEnrollments?.map((enroll, index) => (
               <tr key={enroll.id} className="hover:bg-slate-50">
                 <td className="whitespace-nowrap px-4 py-4">
                   {index + 1}

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { apiRoutes } from '../../api/routes';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { TableLoadingRow } from '../../components/ui/LoadingIndicator';
 
 const StudentList = () => {
   const [students, setStudents] = useState([]);
@@ -69,8 +70,6 @@ const StudentList = () => {
     };
   };
 
-  if (loading) return <div className="text-sm text-slate-600">Loading students...</div>;
-
   const attendanceMap = new Map(
   attendance.map(a => [a.student_id, a.status])
 );
@@ -115,7 +114,7 @@ const mergedStudents = students.map(student => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 text-sm">
-            {filteredStudents.map(student => (
+            {loading ? <TableLoadingRow colSpan={5} label="Loading students…" /> : filteredStudents.map(student => (
               <tr key={student.id} className="hover:bg-slate-50">
                 <td className="whitespace-nowrap px-4 py-4 text-slate-600">{mergedStudents.indexOf(student) + 1}</td>
                 <td className="whitespace-nowrap px-4 py-4 font-medium text-slate-950">{student.student.name}</td>

@@ -3,6 +3,7 @@ import { apiRoutes } from '../../api/routes';
 import { Trash2, UserPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import parseDateOfBirth from '../dateFormat';
+import LoadingIndicator from '../../components/ui/LoadingIndicator';
 
 const EnrollmentManagement = () => {
   const [courses, setCourses] = useState([]);
@@ -97,8 +98,6 @@ const EnrollmentManagement = () => {
     }
   };
 
-  if (loading) return <div className="text-sm text-slate-600">Loading enrollments...</div>;
-
   return (
     <div className="mx-auto max-w-7xl">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -111,7 +110,7 @@ const EnrollmentManagement = () => {
 
       {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {courses.map(course => (
+        {loading ? <LoadingIndicator label="Loading courses…" className="col-span-full" /> : courses.map(course => (
             <div onClick={() => handleCourseClick(course.id)} key={course.id} className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm cursor-pointer"><span>{course.name}</span></div>
         ))}
       </div>

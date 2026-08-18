@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { apiRoutes } from '../../api/routes';
 import { SquarePen, Trash2, UserPlus, KeyIcon } from 'lucide-react';
+import { TableLoadingRow } from '../../components/ui/LoadingIndicator';
 
 const TeachersManagement = () => {
   const [teachers, setTeachers] = useState([]);
@@ -103,8 +104,6 @@ const TeachersManagement = () => {
     }
   };
 
-  if (loading) return <div className="text-sm text-slate-600">Loading Teachers...</div>;
-
     const filteredTeachers = teachers?.filter((teacher) => {
     const nameMatch = teacher.name
       .toLowerCase()
@@ -146,7 +145,7 @@ const TeachersManagement = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 text-sm">
-            {filteredTeachers.map(teacher => (
+            {loading ? <TableLoadingRow colSpan={5} label="Loading teachers…" /> : filteredTeachers.map(teacher => (
               <tr key={teacher.id} className="hover:bg-slate-50">
                 <td className="whitespace-nowrap px-4 py-4 text-slate-600">{teachers.indexOf(teacher) + 1}</td>
                 <td className="whitespace-nowrap px-4 py-4 font-medium text-slate-950">{teacher.name}</td>

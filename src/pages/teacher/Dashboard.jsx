@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiRoutes } from '../../api/routes';
 import { FileText, CheckSquare, PlusCircle } from 'lucide-react';
+import LoadingIndicator from '../../components/ui/LoadingIndicator';
 
 const TeacherDashboard = () => {
   const { user } = useAuth();
@@ -41,7 +42,15 @@ const TeacherDashboard = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return (
+    <div className="mx-auto max-w-7xl">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight text-slate-950">Teacher Dashboard</h1>
+        <p className="mt-2 text-slate-600">Welcome, {user?.name}!</p>
+      </div>
+      <LoadingIndicator label="Loading dashboard…" />
+    </div>
+  );
   if (error) return <div>Error: {error}</div>;
 
   return (
