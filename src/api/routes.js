@@ -61,7 +61,7 @@ export const apiRoutes = {
   getEnrollmentsByStudent: (studentId, params) => apiClient.get(`/enrollments/students/${studentId}`, { params }),
 
   // Submissions
-  getSubmissions: () => apiClient.get("/submissions"),
+  getSubmissions: (params) => apiClient.get("/submissions", { params }),
   startSubmission: (submissionData) => apiClient.post("/submissions", submissionData),
   getSubmissionById: (id) => apiClient.get(`/submissions/${id}`),
   getSubmissionAnswers: (submissionId) => apiClient.get(`/submissions/${submissionId}/answers`),

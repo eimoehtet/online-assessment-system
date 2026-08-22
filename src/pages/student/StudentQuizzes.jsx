@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiRoutes } from '../../api/routes';
-import { FileText, Clock, Play, AlertCircle, ArrowLeft } from 'lucide-react';
+import { FileText, Clock, Play, AlertCircle, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
 import LoadingIndicator from '../../components/ui/LoadingIndicator';
 
@@ -9,21 +9,37 @@ const StudentQuizzes = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
   const [quizzes, setQuizzes] = useState([]);
+  const [submissionsByQuiz, setSubmissionsByQuiz] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchQuizzes = async () => {
       try {
-        const res = await apiRoutes.getQuizzes();
+        const [quizRes, submissionRes] = await Promise.all([
+          apiRoutes.getQuizzes(),
+          apiRoutes.getSubmissions({ limit: 100 }),
+        ]);
         const fetchedAt = Date.now();
-        const courseQuizzes = (res.data.data || []).filter(
+        const courseQuizzes = (quizRes.data.data || []).filter(
           q => q.course_id === parseInt(courseId) && q.status === 'PUBLISHED'
         ).map(q => ({
           ...q,
           deadlinePassed: new Date(q.end_date).getTime() <= fetchedAt
         }));
+
+        const submissions = (submissionRes.data.data || []).reduce((byQuiz, submission) => {
+          const existing = byQuiz[submission.quiz_id] || { count: 0, latest: null };
+          existing.count += 1;
+          if (!existing.latest || submission.id > existing.latest.id) {
+            existing.latest = submission;
+          }
+          byQuiz[submission.quiz_id] = existing;
+          return byQuiz;
+        }, {});
+
         setQuizzes(courseQuizzes);
+        setSubmissionsByQuiz(submissions);
       } catch {
         setError('Failed to fetch quizzes for this course');
       } finally {
@@ -55,6 +71,17 @@ const StudentQuizzes = () => {
     }
   };
 
+  const handleQuizAction = (quiz) => {
+    const submission = submissionsByQuiz[quiz.id]?.latest;
+
+    if (submission?.status === 'IN_PROGRESS') {
+      navigate(`/student/quiz/take/${submission.id}`);
+      return;
+    }
+
+    handleStartQuiz(quiz.id);
+  };
+
   return (
     <div className="mx-auto max-w-7xl">
       <div className="mb-8 flex items-center gap-3">
@@ -73,7 +100,14 @@ const StudentQuizzes = () => {
             <p className="text-sm">No active quizzes available for this course at the moment.</p>
           </div>
         ) : (
-          quizzes.map(quiz => (
+          quizzes.map(quiz => {
+            const quizAttempts = submissionsByQuiz[quiz.id];
+            const submission = quizAttempts?.latest;
+            const isDone = quizAttempts?.count >= quiz.allowed_attempts
+              && submission?.status !== 'IN_PROGRESS';
+            const isUnavailable = quiz.deadlinePassed || isDone;
+
+            return (
             <div key={quiz.id} className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:flex-row lg:items-center lg:justify-between">
               <div className="flex gap-5">
                 <div className="h-fit rounded-xl bg-slate-100 p-4 text-blue-700">
@@ -100,15 +134,22 @@ const StudentQuizzes = () => {
                 </div>
               </div>
               <button
-                onClick={() => handleStartQuiz(quiz.id)}
-                disabled={quiz.deadlinePassed}
+                onClick={() => handleQuizAction(quiz)}
+                disabled={isUnavailable}
                 className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
               >
-                <Play size={18} fill="currentColor" />
-                {quiz.deadlinePassed ? 'Deadline Passed' : 'Start Quiz'}
+                {isDone ? <CheckCircle2 size={18} /> : <Play size={18} fill="currentColor" />}
+                {isDone
+                  ? 'Done'
+                  : quiz.deadlinePassed
+                    ? 'Deadline Passed'
+                    : submission
+                      ? 'Continue Quiz'
+                      : 'Start Quiz'}
               </button>
             </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

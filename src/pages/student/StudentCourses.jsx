@@ -17,6 +17,7 @@ const StudentCourses = () => {
     const fetchEnrollments = async () => {
       try {
         const res = await apiRoutes.getEnrollmentsByStudent(studentId, { limit: 100 });
+        console.log('Fetched enrollments:', res.data.data);
         setEnrollments(res.data.data || []);
       } catch {
         setError('Failed to fetch your courses');
