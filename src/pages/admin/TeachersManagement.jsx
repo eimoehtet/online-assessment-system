@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiRoutes } from '../../api/routes';
-import { SquarePen, Trash2, UserPlus, KeyIcon } from 'lucide-react';
+import { SquarePen, Trash2, UserPlus, KeyIcon, Eye, EyeOff } from 'lucide-react';
 import { TableLoadingRow } from '../../components/ui/LoadingIndicator';
 
 const TeachersManagement = () => {
@@ -9,18 +9,18 @@ const TeachersManagement = () => {
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState([false, null]);
   const [showResetPasswordModal, setShowResetPasswordModal] = useState([false, null]);
+  const [showPassword, setShowPassword] = useState(false);
   const initialFormData = {
     name: '',
     email: '',
     password: '',
     role: 'TEACHER',
     gender: null,
-    phone_number: '',
-    date_of_birth: '',
-    address: ''
+    student_id: '',
   };
   const [formData, setFormData] = useState(initialFormData);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalTeachers, setTotalTeachers] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [nameSearch, setNameSearch] = useState("");
 
@@ -30,6 +30,7 @@ const TeachersManagement = () => {
       const response = await apiRoutes.getTeachers({ page });
       setTeachers(response.data.data || []);
       setTotalPages(response.data.meta.totalPages || 1);
+      setTotalTeachers(response.data.meta.total || 0);
       setCurrentPage(response.data.meta.page || 1);
     } catch {
       setError('Failed to fetch Teachers');
@@ -54,9 +55,7 @@ const TeachersManagement = () => {
         email: showModal[1].email,
         role: showModal[1].role,
         gender: showModal[1].gender || null,
-        phone_number: showModal[1].phone_number || '',
-        date_of_birth: showModal[1].date_of_birth ? showModal[1].date_of_birth.split('T')[0] : '',
-        address: showModal[1].address || ''
+        student_id: showModal[1].student_id || '',
       });
     } else {
       setFormData(initialFormData);
@@ -70,6 +69,7 @@ const TeachersManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('Submitting form data:', formData);
     try {
       if (showModal[1]) {
         await apiRoutes.updateUser(showModal[1].id, formData);
@@ -128,6 +128,7 @@ const TeachersManagement = () => {
             onChange={(e) => setNameSearch(e.target.value)}
             className="border border-gray-300 p-2 rounded-md w-[300px] bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+                <p className="text-sm font-semibold text-slate-700">Total teachers: {totalTeachers}</p>
         </div>
 
       {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
@@ -208,7 +209,13 @@ const TeachersManagement = () => {
               </div>
              {!showModal[1] &&  <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">Password</label>
-                <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="password" name="password" value={formData.password} onChange={handleInputChange} required />
+                <div className="relative">
+                  <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 pr-11 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onChange={handleInputChange} minLength={6} required />
+                  <button type="button" onClick={() => setShowPassword(value => !value)} className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 hover:text-slate-700" aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+                <p className="mt-1 text-xs text-slate-500">At least 6 characters</p>
               </div>}
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">Gender</label>
@@ -246,7 +253,13 @@ const TeachersManagement = () => {
             }} className="mt-6 space-y-4">
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">New Password</label>
-                <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="password" name="password" value={formData.password} onChange={handleInputChange} required />
+                <div className="relative">
+                  <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 pr-11 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onChange={handleInputChange} minLength={6} required />
+                  <button type="button" onClick={() => setShowPassword(value => !value)} className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 hover:text-slate-700" aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+                <p className="mt-1 text-xs text-slate-500">At least 6 characters</p>
               </div>
               <div className="flex gap-3 pt-4">
                 <button type="button" onClick={() => setShowResetPasswordModal([false, null])} className="flex-1 rounded-lg bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-300 cursor-pointer">Cancel</button>

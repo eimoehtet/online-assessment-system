@@ -18,7 +18,7 @@ const QuizTake = () => {
   const [loading, setLoading] = useState(true);
   const [quiz, setQuiz] = useState(null);
   const [questions, setQuestions] = useState([]);
-  const [answers, setAnswers] = useState({}); // { questionId: value }
+  const [answers, setAnswers] = useState({}); 
   const [timeLeft, setTimeLeft] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -326,7 +326,7 @@ const QuizTake = () => {
                 value={answers[question.id] || ''}
                 onChange={(e) => handleAnswerChange(question.id, e.target.value)}
                 placeholder="Type your answer here..."
-                className="w-full rounded-lg border border-slate-300 px-4 py-3 text-lg outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                className="w-full min-h-12 rounded-lg border border-slate-300 px-4 py-3 text-lg outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
               />
             )}
 

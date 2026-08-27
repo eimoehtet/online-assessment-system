@@ -147,15 +147,15 @@ const EnrollmentManagement = () => {
               </div>
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">Phone Number</label>
-                <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="text" name="phone_number" value={formData.phone_number} onChange={handleInputChange} required />
+                <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="text" name="phone_number" value={formData.phone_number} onChange={handleInputChange} />
               </div>
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">Date of Birth</label>
-                <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="date" name="date_of_birth" value={formData.date_of_birth} onChange={handleInputChange} required />
+                <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="date" name="date_of_birth" value={formData.date_of_birth} onChange={handleInputChange} />
               </div>
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">Address</label>
-                <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="text" name="address" value={formData.address} onChange={handleInputChange} required />
+                <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="text" name="address" value={formData.address} onChange={handleInputChange} />
               </div>
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">Assign Course</label>
