@@ -12,7 +12,8 @@ import {
   Circle, 
   ChevronDown,
   ChevronUp,
-  Copy
+  Copy,
+  GripVertical
 } from 'lucide-react';
 
 const createTrueFalseOptions = (correctOption = 'TRUE') => [
@@ -49,6 +50,8 @@ const QuizEditor = () => {
   const [courses, setCourses] = useState([]);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [draggedQuestionIndex, setDraggedQuestionIndex] = useState(null);
+  const [dragOverQuestionIndex, setDragOverQuestionIndex] = useState(null);
   const { user } = useAuth();
   const teacher_id = user?.id;
 
@@ -229,6 +232,27 @@ const QuizEditor = () => {
     setFormData(prev => ({ ...prev, questions: newQuestions }));
   };
 
+  const handleQuestionDrop = (dropIndex) => {
+    if (draggedQuestionIndex === null || draggedQuestionIndex === dropIndex) {
+      setDraggedQuestionIndex(null);
+      setDragOverQuestionIndex(null);
+      return;
+    }
+
+    setFormData(prev => {
+      const questions = [...prev.questions];
+      const [draggedQuestion] = questions.splice(draggedQuestionIndex, 1);
+      questions.splice(dropIndex, 0, draggedQuestion);
+      const orderedQuestions = questions.map((question, index) => ({
+        ...question,
+        question_order: index + 1
+      }));
+      return { ...prev, questions: orderedQuestions };
+    });
+    setDraggedQuestionIndex(null);
+    setDragOverQuestionIndex(null);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -390,10 +414,43 @@ const QuizEditor = () => {
 
           <div className="space-y-6">
             {formData.questions.map((q, qIdx) => (
-              <div key={qIdx} className="relative rounded-xl border border-l-4 border-slate-200 border-l-blue-600 bg-white p-5 shadow-sm">
+              <div
+                key={qIdx}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  setDragOverQuestionIndex(qIdx);
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  handleQuestionDrop(qIdx);
+                }}
+                className={`relative rounded-xl border border-l-4 bg-white p-5 shadow-sm transition ${
+                  dragOverQuestionIndex === qIdx && draggedQuestionIndex !== qIdx
+                    ? 'border-green-500 border-l-green-600 ring-2 ring-green-200'
+                    : 'border-slate-200 border-l-blue-600'
+                } ${draggedQuestionIndex === qIdx ? 'opacity-50' : ''}`}
+              >
                 {/* Question Header */}
                 <div className="mb-6 flex items-center justify-between gap-4 border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      draggable
+                      onDragStart={(event) => {
+                        setDraggedQuestionIndex(qIdx);
+                        event.dataTransfer.effectAllowed = 'move';
+                        event.dataTransfer.setData('text/plain', String(qIdx));
+                      }}
+                      onDragEnd={() => {
+                        setDraggedQuestionIndex(null);
+                        setDragOverQuestionIndex(null);
+                      }}
+                      className="cursor-grab rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 active:cursor-grabbing"
+                      title="Drag to reorder question"
+                      aria-label={`Drag question ${qIdx + 1} to reorder`}
+                    >
+                      <GripVertical size={20} />
+                    </button>
                     <div className="flex flex-col">
                       <button className="text-slate-500 transition hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-30" onClick={() => moveQuestion(qIdx, -1)} disabled={qIdx === 0} title="Move question up"><ChevronUp size={16} /></button>
                       <button className="text-slate-500 transition hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-30" onClick={() => moveQuestion(qIdx, 1)} disabled={qIdx === formData.questions.length - 1} title="Move question down"><ChevronDown size={16} /></button>
