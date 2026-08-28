@@ -128,7 +128,7 @@ const TeachersManagement = () => {
             onChange={(e) => setNameSearch(e.target.value)}
             className="border border-gray-300 p-2 rounded-md w-[300px] bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-                <p className="text-sm font-semibold text-slate-700">Total teachers: {totalTeachers}</p>
+          <p className="text-sm font-semibold text-slate-700">Total teachers: {totalTeachers}</p>
         </div>
 
       {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}

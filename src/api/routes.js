@@ -32,7 +32,7 @@ export const apiRoutes = {
   toggleCourseStatus: (id) => apiClient.post(`/courses/${id}/toggle-status`),
 
   // Quizzes
-  getQuizzes: () => apiClient.get("/quizzes"),
+  getQuizzes: (params) => apiClient.get("/quizzes", { params }),
   getQuizById: (id) => apiClient.get(`/quizzes/${id}`),
   getQuizzesByTeacherId: (teacherId) => apiClient.get(`/quizzes/teacher/${teacherId}`),
   createQuiz: (quizData) => apiClient.post("/quizzes", quizData),

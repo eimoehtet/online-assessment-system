@@ -405,7 +405,7 @@ const SubmissionDashboard = () => {
                           <div className="text-xs font-semibold uppercase tracking-wide text-blue-600">{answer.question?.question_type}</div>
                           <h4 className="mt-1 font-semibold text-slate-950">{answer.question?.question_text}</h4>
                         </div>
-                        <div className="flex items-center gap-2 text-sm font-semibold">
+                        <div className="flex items-center gap-2 text-sm font-semibold min-w-[80px]">
                           {answer.is_correct === true && <CheckCircle2 className="text-emerald-600" size={18} />}
                           {answer.is_correct === false && <XCircle className="text-red-600" size={18} />}
                           {['SHORT_Q', 'LONG_Q'].includes(answer.question?.question_type) ? (

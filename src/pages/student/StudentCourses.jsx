@@ -7,6 +7,7 @@ import LoadingIndicator from '../../components/ui/LoadingIndicator';
 
 const StudentCourses = () => {
   const [enrollments, setEnrollments] = useState([]);
+  const [coursesWithPendingQuizzes, setCoursesWithPendingQuizzes] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -16,9 +17,30 @@ const StudentCourses = () => {
   useEffect(() => {
     const fetchEnrollments = async () => {
       try {
-        const res = await apiRoutes.getEnrollmentsByStudent(studentId, { limit: 100 });
-        console.log('Fetched enrollments:', res.data.data);
-        setEnrollments(res.data.data || []);
+        const [enrollmentRes, quizRes, submissionRes] = await Promise.all([
+          apiRoutes.getEnrollmentsByStudent(studentId, { limit: 100 }),
+          apiRoutes.getQuizzes({ limit: 100 }),
+          apiRoutes.getSubmissions({ limit: 100 })
+        ]);
+        const studentEnrollments = enrollmentRes.data.data || [];
+        const submittedQuizIds = new Set(
+          (submissionRes.data.data || [])
+            .filter(submission => submission.status !== 'IN_PROGRESS')
+            .map(submission => submission.quiz_id)
+        );
+        const now = Date.now();
+        const pendingCourseIds = new Set(
+          (quizRes.data.data || [])
+            .filter(quiz => (
+              quiz.status === 'PUBLISHED'
+              && new Date(quiz.end_date).getTime() > now
+              && !submittedQuizIds.has(quiz.id)
+            ))
+            .map(quiz => quiz.course_id)
+        );
+
+        setEnrollments(studentEnrollments);
+        setCoursesWithPendingQuizzes(pendingCourseIds);
       } catch {
         setError('Failed to fetch your courses');
       } finally {
@@ -56,10 +78,14 @@ const StudentCourses = () => {
               </div>
               <button
                 onClick={() => navigate(`/student/courses/${enrollment.course_id}/quizzes`)}
-                className="mt-auto inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500 cursor-pointer"
+                className={`mt-auto inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition ${
+                  coursesWithPendingQuizzes.has(enrollment.course_id)
+                    ? 'bg-green-600 hover:bg-green-500'
+                    : 'bg-red-600 hover:bg-red-500'
+                }`}
               >
-                View Quizzes
-                <ArrowRight size={16} />
+                  View Quizzes
+                  <ArrowRight size={16} />
               </button>
             </div>
           ))

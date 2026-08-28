@@ -15,6 +15,31 @@ import {
   Copy
 } from 'lucide-react';
 
+const createTrueFalseOptions = (correctOption = 'TRUE') => [
+  { option_text: 'TRUE', is_correct: correctOption === 'TRUE', option_order: 1 },
+  { option_text: 'FALSE', is_correct: correctOption === 'FALSE', option_order: 2 }
+];
+
+const normalizeTrueFalseOptions = (options = []) => {
+  const correctOption = options.find((option) => option.is_correct);
+  return createTrueFalseOptions(
+    String(correctOption?.option_text || '').toUpperCase() === 'FALSE' ? 'FALSE' : 'TRUE'
+  );
+};
+
+const toLocalDateTimeInput = (value) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return localDate.toISOString().slice(0, 16);
+};
+
+const getTotalPoints = (questions) => questions.reduce(
+  (total, question) => total + (Number(question.points) || 0),
+  0
+);
+
 const QuizEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -57,14 +82,16 @@ const QuizEditor = () => {
         setFormData({
           title: quiz.title,
           course_id: quiz.course_id,
-          end_date: quiz.end_date ? quiz.end_date.slice(0, 16) : '',
+          end_date: quiz.end_date ? toLocalDateTimeInput(quiz.end_date) : '',
           time_limit: quiz.time_limit ?? '',
           allowed_attempts: quiz.allowed_attempts,
           status: quiz.status,
           questions: questionsRes.data.map(q => ({
             ...q,
             // Ensure options have necessary fields if coming from backend
-            options: q.options || []
+            options: q.question_type === 'TRUE_FALSE'
+              ? normalizeTrueFalseOptions(q.options)
+              : (q.options || [])
           }))
         });
       } else {
@@ -112,6 +139,10 @@ const QuizEditor = () => {
 
   const duplicateQuestion = (index) => {
     const q = formData.questions[index];
+    if (getTotalPoints(formData.questions) + (Number(q.points) || 0) > 100) {
+      window.alert('The total points for a quiz should not exceed 100.');
+      return;
+    }
     const newQ = { 
       ...JSON.parse(JSON.stringify(q)), 
       id: undefined, 
@@ -125,12 +156,26 @@ const QuizEditor = () => {
 
   const handleQuestionChange = (index, field, value) => {
     const newQuestions = [...formData.questions];
+
+    if (field === 'points') {
+      const proposedTotal = newQuestions.reduce((total, question, questionIndex) => (
+        total + (Number(questionIndex === index ? value : question.points) || 0)
+      ), 0);
+
+      if (proposedTotal > 100) {
+        window.alert('The total points for a quiz should not exceed 100.');
+        return;
+      }
+    }
+
     newQuestions[index] = { ...newQuestions[index], [field]: value };
     
     // Reset options if changing to non-option type
     if (field === 'question_type' && (value === 'SHORT_Q' || value === 'LONG_Q')) {
       newQuestions[index].options = [];
-    } else if (field === 'question_type' && (value === 'MCQ' || value === 'TRUE_FALSE') && newQuestions[index].options.length === 0) {
+    } else if (field === 'question_type' && value === 'TRUE_FALSE') {
+      newQuestions[index].options = createTrueFalseOptions();
+    } else if (field === 'question_type' && value === 'MCQ' && newQuestions[index].options.length === 0) {
       newQuestions[index].options = [
         { option_text: '', is_correct: true, option_order: 1 },
         { option_text: '', is_correct: false, option_order: 2 }
@@ -186,6 +231,12 @@ const QuizEditor = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (getTotalPoints(formData.questions) > 100) {
+      window.alert('The total points for a quiz should not exceed 100.');
+      return;
+    }
+
     setSaving(true);
     setError('');
 
@@ -387,6 +438,7 @@ const QuizEditor = () => {
                         value={q.points}
                         onChange={(e) => handleQuestionChange(qIdx, 'points', e.target.value)}
                         min="0"
+                        max="100"
                         className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                       />
                     </div>
@@ -394,7 +446,7 @@ const QuizEditor = () => {
                 </div>
 
                 {/* Options Section */}
-                {(q.question_type === 'MCQ' || q.question_type === 'TRUE_FALSE') && (
+                {(q.question_type === 'MCQ') && (
                   <div className="mt-5 rounded-lg bg-slate-50 p-4">
                     <div className="mb-4 flex items-center justify-between gap-4">
                       <label className="text-sm font-bold text-slate-700">Options</label>
@@ -423,6 +475,23 @@ const QuizEditor = () => {
                           <button type="button" onClick={() => removeOption(qIdx, oIdx)} className="rounded-md p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-500" title="Remove option"><Trash2 size={16} /></button>
                         )}
                       </div>
+                    ))}
+                  </div>
+                )}
+                {(q.question_type === 'TRUE_FALSE') && (
+                  <div className="mt-5 rounded-lg bg-slate-50 p-4">
+                    <label className="mb-2 block text-sm font-medium text-slate-700">Correct Answer</label>
+                    {q.options.map((opt, oIdx) => (
+                      <button
+                        key={opt.option_text}
+                        type="button"
+                        onClick={() => handleOptionChange(qIdx, oIdx, 'is_correct', true)}
+                        className={`mb-2 flex w-full cursor-pointer items-center gap-3 rounded-md border px-3 py-2 text-left last:mb-0 ${opt.is_correct ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-300 bg-white text-slate-700'}`}
+                        title={`Mark ${opt.option_text === 'TRUE' ? 'True' : 'False'} correct`}
+                      >
+                        {opt.is_correct ? <CheckCircle size={20} /> : <Circle size={20} />}
+                        <span className="font-medium">{opt.option_text === 'TRUE' ? 'True' : 'False'}</span>
+                      </button>
                     ))}
                   </div>
                 )}

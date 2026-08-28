@@ -314,7 +314,11 @@ const QuizTake = () => {
                       onChange={(e) => handleAnswerChange(question.id, e.target.value)}
                       className="size-5 accent-blue-600"
                     />
-                    <span className="text-lg text-slate-800">{option.option_text}</span>
+                    <span className="text-lg text-slate-800">
+                      {question.question_type === 'TRUE_FALSE'
+                        ? (option.option_text === 'TRUE' ? 'True' : 'False')
+                        : option.option_text}
+                    </span>
                   </label>
                 ))}
               </div>
