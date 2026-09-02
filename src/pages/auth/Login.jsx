@@ -87,9 +87,9 @@ const Login = () => {
             </button>
             </div>
           </div>
-          {/* <div className="text-right">
+          <div className="text-right">
             <Link to="/forgot-password" className="text-xs text-slate-500 hover:text-red-600 hover:underline transition-colors font-medium">Forgot password?</Link>
-          </div> */}
+          </div>
           <button
             type="submit"
             className="w-full text-sm rounded-lg bg-red-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
