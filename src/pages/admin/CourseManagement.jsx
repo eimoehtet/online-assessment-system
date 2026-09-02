@@ -158,7 +158,7 @@ const CourseManagement = () => {
                         <span className="slider round"></span>
                       </label>
                     </button>
-                      <Link to={`/admin/courses/${course.id}/students`} className="text-xs font-semibold">Add Students</Link>
+                      <Link to={`/admin/courses/${course.id}/students`} className="text-xs font-semibold flex items-center">Add Students</Link>
                     </div>
                   </td>
                 </tr>
