@@ -7,7 +7,7 @@ export const apiRoutes = {
   refresh: (csrfToken) => apiClient.post("/users/refresh", null, { headers: { "X-CSRF-Token": csrfToken } }),
   logout: (csrfToken) => apiClient.post("/users/logout", null, { headers: { "X-CSRF-Token": csrfToken } }),
   getCurrentUser: () => apiClient.get("/users/me"),
-  forgotPassword: (email) => apiClient.post("/users/forgot-password", { email }),
+  forgotPassword: (email) => apiClient.post("/users/forgot-password", { email }, {timeout: 30000}),
   resetPasswordWithToken: (token, newPassword) => apiClient.post("/users/reset-password-with-token", { token, newPassword }),
 
   // Users (Admin)
