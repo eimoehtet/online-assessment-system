@@ -22,6 +22,7 @@ import StudentCourses from './pages/student/StudentCourses';
 import StudentQuizzes from './pages/student/StudentQuizzes';
 import QuizTake from './pages/student/QuizTake';
 import StudentResults from './pages/student/StudentResults';
+import StudentResultDetail from './pages/student/StudentResultDetail';
 import EnrollmentDetail from './pages/admin/EnrollmentDetail';
 import UserProfile from './pages/UserProfile';
 import ChangePasswordForm from './pages/ChangePasswordForm';
@@ -158,6 +159,11 @@ function App() {
             <Route path="/student/results" element={
               <ProtectedRoute allowedRoles={['STUDENT']}>
                 <StudentResults />
+              </ProtectedRoute>
+            } />
+            <Route path="/student/results/:submissionId" element={
+              <ProtectedRoute allowedRoles={['STUDENT']}>
+                <StudentResultDetail />
               </ProtectedRoute>
             } />
           </Route>

@@ -1,160 +1,46 @@
-import { useState, useEffect } from 'react';
-import { apiRoutes } from '../../api/routes';
-import { CheckCircle2, CheckSquare, Trophy, FileText, AlertCircle, XCircle } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { BookOpen, ChevronDown, Clock, Trophy } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
+import { apiRoutes } from '../../api/routes';
 import LoadingIndicator from '../../components/ui/LoadingIndicator';
 
 const StudentResults = () => {
-  const [submissions, setSubmissions] = useState([]);
+  const [params, setParams] = useSearchParams();
+  const [results, setResults] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [summary, setSummary] = useState({});
+  const [meta, setMeta] = useState({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [reviewAnswers, setReviewAnswers] = useState({});
-  const [reviewLoading, setReviewLoading] = useState(null);
+  const value = (key, fallback = '') => params.get(key) || fallback;
+  const page = Number(value('page', '1'));
+  const update = (changes) => { const next = new URLSearchParams(params); Object.entries(changes).forEach(([key, val]) => val ? next.set(key, val) : next.delete(key)); if (!('page' in changes)) next.delete('page'); setParams(next); };
 
-  useEffect(() => {
-    const fetchSubmissions = async () => {
-      try {
-        const res = await apiRoutes.getSubmissions();
-        setSubmissions(res.data.data || []);
-      } catch {
-        setError('Failed to fetch your quiz results');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchSubmissions();
-  }, []);
-
-  const toggleAnswers = async (submissionId) => {
-    if (reviewAnswers[submissionId]) {
-      setReviewAnswers((current) => ({ ...current, [submissionId]: null }));
-      return;
-    }
-    setReviewLoading(submissionId);
+  const load = useCallback(async () => {
+    setLoading(true); setError('');
     try {
-      const res = await apiRoutes.getSubmissionAnswers(submissionId);
-      setReviewAnswers((current) => ({ ...current, [submissionId]: res.data || [] }));
-    } catch {
-      setError('Failed to load submitted answers');
-    } finally {
-      setReviewLoading(null);
-    }
-  };
+      const query = { ...Object.fromEntries(params.entries()), workflow: value('workflow', 'COMPLETED'), limit: 10 };
+      const [resultRes, courseRes] = await Promise.all([apiRoutes.getSubmissions(query), apiRoutes.getMyCourses()]);
+      setResults(resultRes.data.data || []); setMeta(resultRes.data.meta); setSummary(resultRes.data.summary || {}); setCourses(courseRes.data.data || []);
+    } catch (err) { setError(err.response?.data?.message || 'Failed to load your results.'); }
+    finally { setLoading(false); }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params]);
 
-  const isWrittenQuestion = (answer) => ['SHORT_Q', 'LONG_Q'].includes(answer.question?.question_type);
-  const earnedPoints = (answer) => isWrittenQuestion(answer)
-    ? (answer.teacher_points_awarded ?? 0)
-    : (answer.points_awarded ?? 0);
-
-  return (
-    <div className="mx-auto max-w-7xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-950">My Quiz Results</h1>
-        <p className="mt-2 text-slate-600">Review your performance and behavioral feedback.</p>
-      </div>
-
-      {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
-
-      <div className="space-y-5">
-        {loading ? <LoadingIndicator label="Loading your results…" /> : submissions.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-slate-500">
-            <Trophy size={48} className="mx-auto mb-4" />
-            <p className="text-sm">You haven't completed any quizzes yet.</p>
-          </div>
-        ) : (
-          submissions.map(sub => (
-            <div key={sub.id} className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <h3 className="text-xl font-semibold text-slate-950">{sub.quiz?.title}</h3>
-                  <p className="mt-1 text-sm text-slate-500">Submitted on {format(new Date(sub.completed_at || sub.submitted_at), 'PPP pp')}</p>
-                </div>
-                <div className="sm:text-right">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {sub.status === 'RELEASED' ? `${sub.total_score} Pts` : 'Awaiting review'}
-                  </div>
-                  <p className="text-xs text-slate-500">{sub.status === 'RELEASED' ? 'Total Score' : 'Score is hidden until released'}</p>
-                </div>
-              </div>
-
-              <div className="grid gap-4 rounded-lg bg-slate-50 p-4 sm:grid-cols-3">
-                <div className="flex items-center gap-3">
-                  <FileText size={18} className="text-slate-500" />
-                  <div>
-                    <div className="text-sm font-bold text-slate-950">{sub._count?.answers || 0}</div>
-                    <div className="text-xs text-slate-500">Questions Answered</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <CheckSquare size={18} className="text-emerald-600" />
-                  <div>
-                    <div className="text-sm font-bold text-slate-950">{sub.status === 'RELEASED' ? 'Released' : 'Hidden'}</div>
-                    <div className="text-xs text-slate-500">Automatic marks</div>
-                  </div>
-                </div>
-                {/* Behavioral Alert if any */}
-                <div className="flex items-center gap-3">
-                  <AlertCircle size={18} className="text-amber-500" />
-                  <div>
-                    <div className="text-sm font-bold text-slate-950">Monitored</div>
-                    <div className="text-xs text-slate-500">Integrity Logs Saved</div>
-                  </div>
-                </div>
-              </div>
-              {sub.status === 'RELEASED' && sub.feedback && (
-                <div className="mb-4 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
-                  <span className="font-semibold">Overall teacher feedback: </span>{sub.feedback}
-                </div>
-              )}
-              <div className="mt-4">
-                <button
-                  onClick={() => toggleAnswers(sub.id)}
-                  disabled={reviewLoading === sub.id}
-                  className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200 disabled:opacity-60"
-                >
-                  {reviewLoading === sub.id ? 'Loading answers...' : reviewAnswers[sub.id] ? 'Hide submitted answers' : 'Review submitted answers'}
-                </button>
-                {reviewAnswers[sub.id] && (
-                  <div className="mt-4 space-y-3 border-t border-slate-200 pt-4">
-                    {reviewAnswers[sub.id].map((answer) => (
-                      <article key={answer.id} className="rounded-lg border border-slate-200 p-4">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                          <div>
-                            <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">{answer.question?.question_type}</p>
-                            <h4 className="mt-1 font-semibold text-slate-950">{answer.question?.question_text}</h4>
-                          </div>
-                          {sub.status === 'RELEASED' && (
-                            <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                              {!isWrittenQuestion(answer) && answer.is_correct === true && <CheckCircle2 size={18} className="text-emerald-600" />}
-                              {!isWrittenQuestion(answer) && answer.is_correct === false && <XCircle size={18} className="text-red-600" />}
-                              <span>{earnedPoints(answer)} / {answer.question?.points ?? 0} pts</span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="mt-3 whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
-                          {answer.student_answer || <span className="text-slate-400">No answer submitted</span>}
-                        </div>
-                        {sub.status === 'RELEASED' && !isWrittenQuestion(answer) && (
-                          <p className={`mt-3 text-sm font-semibold ${answer.is_correct ? 'text-emerald-700' : 'text-red-700'}`}>
-                            {answer.is_correct ? 'Correct' : 'Incorrect'}
-                          </p>
-                        )}
-                        {sub.status === 'RELEASED' && isWrittenQuestion(answer) && answer.teacher_feedback && (
-                          <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-900">
-                            <span className="font-semibold">Teacher feedback: </span>{answer.teacher_feedback}
-                          </div>
-                        )}
-                      </article>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+  useEffect(() => { const timer = window.setTimeout(load, 0); return () => window.clearTimeout(timer); }, [load]);
+  return <div className="mx-auto max-w-6xl">
+    <div className="mb-7"><h1 className="text-3xl font-bold tracking-tight text-slate-950">My Results</h1><p className="mt-2 text-slate-600">Track completed quizzes, released scores, and teacher feedback by subject.</p></div>
+    <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{[['Completed attempts', summary.total || 0], ['Awaiting review', summary.awaiting_review || 0], ['Average score', summary.released_average === null || summary.released_average === undefined ? '—' : `${summary.released_average}%`], ['Highest score', summary.released_highest === null || summary.released_highest === undefined ? '—' : `${summary.released_highest}%`]].map(([label, metric]) => <div key={label} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="text-2xl font-bold text-slate-950">{metric}</div><div className="text-xs text-slate-500">{label}</div></div>)}</div>
+    <div className="mb-5 grid gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-3">
+      <Select label="Subject" value={value('course_id')} onChange={(val) => update({ course_id: val, quiz_id: '' })}><option value="">All subjects</option>{courses.map((row) => <option key={row.course.id} value={row.course.id}>{row.course.code} — {row.course.name}</option>)}</Select>
+      <Select label="Result status" value={value('workflow', 'COMPLETED')} onChange={(val) => update({ workflow: val })}><option value="COMPLETED">All completed</option><option value="AWAITING_REVIEW">Awaiting review</option><option value="RELEASED">Released</option></Select>
+      <Select label="Sort results" value={`${value('sort', 'submitted_at')}:${value('order', 'desc')}`} onChange={(val) => { const [sort, order] = val.split(':'); update({ sort, order }); }}><option value="submitted_at:desc">Newest first</option><option value="submitted_at:asc">Oldest first</option><option value="score:desc">Highest score</option><option value="score:asc">Lowest score</option></Select>
     </div>
-  );
+    {error && <div className="mb-4 flex justify-between rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"><span>{error}</span><button onClick={load} className="font-semibold underline">Retry</button></div>}
+    {loading ? <LoadingIndicator label="Loading results…" /> : results.length === 0 ? <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center text-slate-500"><Trophy className="mx-auto mb-3" size={42} /><p className="font-semibold text-slate-700">No results found</p><p className="mt-1 text-sm">Complete a quiz or change the current filters.</p></div> : <div className="space-y-4">{results.map((result) => { const released = result.status === 'RELEASED'; return <article key={result.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div><div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-blue-700"><BookOpen size={15} /> {result.quiz?.course?.code} · {result.quiz?.course?.name}</div><h2 className="mt-2 text-xl font-semibold text-slate-950">{result.quiz?.title}</h2><p className="mt-1 text-sm text-slate-500">Teacher: {result.quiz?.course?.teacher?.name || '—'}</p></div><div className="sm:text-right"><div className={`text-2xl font-bold ${released ? 'text-blue-700' : 'text-slate-700'}`}>{released ? `${result.total_score} / ${result.quiz?.maximum_score || 0}` : 'Awaiting review'}</div>{released && <div className="text-sm font-semibold text-slate-500">{result.percentage}%</div>}</div></div><div className="mt-5 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4 text-sm text-slate-600"><span className="flex items-center gap-1"><Clock size={15} /> {format(new Date(result.completed_at || result.submitted_at), 'PPP pp')}</span><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold">Attempt {result.attempt_number} of {result.quiz?.allowed_attempts}</span><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${released ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{released ? 'Result released' : result.status === 'GRADED' ? 'Review complete' : 'Awaiting review'}</span><Link to={`/student/results/${result.id}?${params.toString()}`} className="ml-auto rounded-lg bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-500">View details</Link></div></article>; })}<div className="flex items-center justify-between py-3"><span className="text-sm text-slate-500">Showing {(meta.page - 1) * meta.limit + 1}–{Math.min(meta.page * meta.limit, meta.total)} of {meta.total}</span><div className="flex gap-2"><button disabled={page <= 1} onClick={() => update({ page: String(page - 1) })} className="rounded-lg border px-3 py-2 text-sm disabled:opacity-40">Previous</button><button disabled={page >= meta.totalPages} onClick={() => update({ page: String(page + 1) })} className="rounded-lg border px-3 py-2 text-sm disabled:opacity-40">Next</button></div></div></div>}
+  </div>;
 };
 
+const Select = ({ label, value, onChange, children }) => <label className="relative"><span className="sr-only">{label}</span><select aria-label={label} value={value} onChange={(event) => onChange(event.target.value)} className="w-full appearance-none rounded-lg border border-slate-300 bg-white py-2.5 pl-3 pr-9 text-sm">{children}</select><ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} /></label>;
 export default StudentResults;

@@ -1,46 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiRoutes } from '../../api/routes';
-import { useAuth } from '../../context/AuthContext';
 import { BookOpen, ArrowRight, Book } from 'lucide-react';
 import LoadingIndicator from '../../components/ui/LoadingIndicator';
 
 const StudentCourses = () => {
   const [enrollments, setEnrollments] = useState([]);
-  const [coursesWithPendingQuizzes, setCoursesWithPendingQuizzes] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const studentId = user?.id;
 
   useEffect(() => {
     const fetchEnrollments = async () => {
       try {
-        const [enrollmentRes, quizRes, submissionRes] = await Promise.all([
-          apiRoutes.getEnrollmentsByStudent(studentId, { limit: 100 }),
-          apiRoutes.getQuizzes({ limit: 100 }),
-          apiRoutes.getSubmissions({ limit: 100 })
-        ]);
-        const studentEnrollments = enrollmentRes.data.data || [];
-        const submittedQuizIds = new Set(
-          (submissionRes.data.data || [])
-            .filter(submission => submission.status !== 'IN_PROGRESS')
-            .map(submission => submission.quiz_id)
-        );
-        const now = Date.now();
-        const pendingCourseIds = new Set(
-          (quizRes.data.data || [])
-            .filter(quiz => (
-              quiz.status === 'PUBLISHED'
-              && new Date(quiz.end_date).getTime() > now
-              && !submittedQuizIds.has(quiz.id)
-            ))
-            .map(quiz => quiz.course_id)
-        );
-
-        setEnrollments(studentEnrollments);
-        setCoursesWithPendingQuizzes(pendingCourseIds);
+        const response = await apiRoutes.getMyCourses();
+        setEnrollments(response.data.data || []);
       } catch {
         setError('Failed to fetch your courses');
       } finally {
@@ -48,7 +22,7 @@ const StudentCourses = () => {
       }
     };
     fetchEnrollments();
-  }, [studentId]);
+  }, []);
 
   return (
     <div className="mx-auto max-w-7xl">
@@ -75,14 +49,16 @@ const StudentCourses = () => {
                 <span className="text-xs font-bold uppercase tracking-wide text-blue-600">{enrollment.course.code}</span>
                 <h3 className="mt-1 font-semibold text-slate-950">{enrollment.course.name}</h3>
                 <p className="mt-2 text-sm text-slate-600">Teacher: {enrollment.course.teacher?.name}</p>
+                <p className="mt-1 text-sm capitalize text-slate-600">Shift: {enrollment.shift?.toLowerCase()}</p>
+                <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold">
+                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700">{enrollment.quiz_summary?.available || 0} available</span>
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">{enrollment.quiz_summary?.completed || 0} completed</span>
+                </div>
+                {enrollment.quiz_summary?.nearest_deadline && <p className="mt-3 text-xs text-slate-500">Nearest deadline: {new Date(enrollment.quiz_summary.nearest_deadline).toLocaleString()}</p>}
               </div>
               <button
-                onClick={() => navigate(`/student/courses/${enrollment.course_id}/quizzes`)}
-                className={`mt-auto inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition ${
-                  coursesWithPendingQuizzes.has(enrollment.course_id)
-                    ? 'bg-green-600 hover:bg-green-500'
-                    : 'bg-red-600 hover:bg-red-500'
-                }`}
+                onClick={() => navigate(`/student/courses/${enrollment.course.id}/quizzes`)}
+                className="mt-auto inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500"
               >
                   View Quizzes
                   <ArrowRight size={16} />

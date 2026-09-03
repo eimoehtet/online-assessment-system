@@ -9,37 +9,18 @@ const StudentQuizzes = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
   const [quizzes, setQuizzes] = useState([]);
-  const [submissionsByQuiz, setSubmissionsByQuiz] = useState({});
+  const [course, setCourse] = useState(null);
+  const [enrollment, setEnrollment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchQuizzes = async () => {
       try {
-        const [quizRes, submissionRes] = await Promise.all([
-          apiRoutes.getQuizzes(),
-          apiRoutes.getSubmissions({ limit: 100 }),
-        ]);
-        const fetchedAt = Date.now();
-        const courseQuizzes = (quizRes.data.data || []).filter(
-          q => q.course_id === parseInt(courseId) && q.status === 'PUBLISHED'
-        ).map(q => ({
-          ...q,
-          deadlinePassed: new Date(q.end_date).getTime() <= fetchedAt
-        }));
-
-        const submissions = (submissionRes.data.data || []).reduce((byQuiz, submission) => {
-          const existing = byQuiz[submission.quiz_id] || { count: 0, latest: null };
-          existing.count += 1;
-          if (!existing.latest || submission.id > existing.latest.id) {
-            existing.latest = submission;
-          }
-          byQuiz[submission.quiz_id] = existing;
-          return byQuiz;
-        }, {});
-
-        setQuizzes(courseQuizzes);
-        setSubmissionsByQuiz(submissions);
+        const response = await apiRoutes.getMyCourseQuizzes(courseId);
+        setQuizzes(response.data.quizzes || []);
+        setCourse(response.data.course);
+        setEnrollment(response.data.enrollment);
       } catch {
         setError('Failed to fetch quizzes for this course');
       } finally {
@@ -48,17 +29,6 @@ const StudentQuizzes = () => {
     };
     fetchQuizzes();
   }, [courseId]);
-
-  const fetchQuizAccessByStudentId = async (studentId) => {
-    try {
-      const res = await apiRoutes.getQuizAccessByUserId(studentId);
-      console.log('Fetched quiz access:', res);
-      return res.data.quiz_access;
-    } catch (err) {
-      console.error('Error fetching quiz access:', err);
-      return [];
-    }
-  };
 
   const handleStartQuiz = async (quizId) => {
     if (window.confirm('Are you ready to start the quiz? The timer will begin immediately.')) {
@@ -72,7 +42,12 @@ const StudentQuizzes = () => {
   };
 
   const handleQuizAction = (quiz) => {
-    const submission = submissionsByQuiz[quiz.id]?.latest;
+    const submission = quiz.latest_submission;
+
+    if (quiz.availability === 'COMPLETED') {
+      navigate(`/student/results?quiz_id=${quiz.id}`);
+      return;
+    }
 
     if (submission?.status === 'IN_PROGRESS') {
       navigate(`/student/quiz/take/${submission.id}`);
@@ -88,7 +63,7 @@ const StudentQuizzes = () => {
         <button onClick={() => navigate('/student/courses')} className="inline-flex size-10 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-200" title="Back to courses">
           <ArrowLeft size={24} />
         </button>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-950">Available Quizzes</h1>
+        <div><h1 className="text-3xl font-bold tracking-tight text-slate-950">{course?.name || 'Course Quizzes'}</h1><p className="mt-1 text-sm text-slate-500">{course?.code} · {course?.teacher?.name} · <span className="capitalize">{enrollment?.shift?.toLowerCase()} shift</span></p></div>
       </div>
 
       {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
@@ -101,11 +76,9 @@ const StudentQuizzes = () => {
           </div>
         ) : (
           quizzes.map(quiz => {
-            const quizAttempts = submissionsByQuiz[quiz.id];
-            const submission = quizAttempts?.latest;
-            const isDone = quizAttempts?.count >= quiz.allowed_attempts
-              && submission?.status !== 'IN_PROGRESS';
-            const isUnavailable = quiz.deadlinePassed || isDone;
+            const submission = quiz.latest_submission;
+            const isDone = quiz.availability === 'COMPLETED';
+            const isUnavailable = ['UPCOMING', 'CLOSED', 'UNAVAILABLE'].includes(quiz.availability);
 
             return (
             <div key={quiz.id} className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:flex-row lg:items-center lg:justify-between">
@@ -128,8 +101,9 @@ const StudentQuizzes = () => {
                     )}
                     <div className="flex items-center gap-1">
                       <AlertCircle size={14} />
-                      <span>Attempts: {quiz.allowed_attempts} max</span>
+                      <span>Attempts: {quiz.attempts_used} / {quiz.allowed_attempts}</span>
                     </div>
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold">{quiz.availability.replaceAll('_', ' ')}</span>
                   </div>
                 </div>
               </div>
@@ -140,8 +114,10 @@ const StudentQuizzes = () => {
               >
                 {isDone ? <CheckCircle2 size={18} /> : <Play size={18} fill="currentColor" />}
                 {isDone
-                  ? 'Done'
-                  : quiz.deadlinePassed
+                  ? 'View Result'
+                  : quiz.availability === 'UPCOMING'
+                    ? `Opens ${format(new Date(quiz.start_date), 'PPp')}`
+                  : quiz.availability === 'CLOSED'
                     ? 'Deadline Passed'
                     : submission
                       ? 'Continue Quiz'
