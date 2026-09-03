@@ -118,8 +118,10 @@ const TeacherDashboard = () => {
               </tr>
             ) : (
               courses.map(course => (
-                <tr key={course.id} className="cursor-pointer hover:bg-slate-50">
-                  <td className="py-4 text-sm text-slate-950">{course.name}</td>
+                <tr key={course.id} className="hover:bg-slate-50">
+                  <td className="py-4 text-sm text-slate-950">
+                      <span>{course.name}</span>
+                  </td>
                 </tr>
               ))
             )}

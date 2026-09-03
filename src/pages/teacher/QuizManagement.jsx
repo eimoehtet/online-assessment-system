@@ -92,7 +92,7 @@ const QuizManagement = () => {
                 </div>
                 <div className="flex items-center gap-2 w-fit bg-red-100 px-2 py-1 rounded-lg cursor-pointer hover:underline hover:text-blue-600" onClick={() => navigate(`/teacher/quizzes/students/${quiz.id}`)}>
                   <Users size={16} />
-                  Students List
+                  Attendance Check
                 </div>
               </div>
 

@@ -33,6 +33,7 @@ const MainLayout = () => {
     ],
     TEACHER: [
       { label: 'Dashboard', path: '/teacher', icon: <LayoutDashboard size={20} /> },
+      { label: 'My Classes', path: '/teacher/classes', icon: <BookOpen size={20} /> },
       { label: 'Quizzes', path: '/teacher/quizzes', icon: <FileText size={20} /> },
       { label: 'Submissions', path: '/teacher/submissions', icon: <CheckSquare size={20} /> },
       { label: 'Change Password', path: '/change-password', icon: <User size={20} /> },

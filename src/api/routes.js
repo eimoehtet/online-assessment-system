@@ -26,6 +26,7 @@ export const apiRoutes = {
   getCourses: (params) => apiClient.get("/courses", { params }),
   getCourseById: (id) => apiClient.get(`/courses/${id}`),
   getCourseByTeacherId: (teacherId, params) => apiClient.get(`/courses/teacher/${teacherId}`, { params }),
+  getCourseRoster: (courseId, params) => apiClient.get(`/courses/${courseId}/students`, { params }),
   createCourse: (courseData) => apiClient.post("/courses", courseData),
   updateCourse: (id, courseData) => apiClient.patch(`/courses/${id}`, courseData),
   deleteCourse: (id) => apiClient.delete(`/courses/${id}`),

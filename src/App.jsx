@@ -25,6 +25,8 @@ import EnrollmentDetail from './pages/admin/EnrollmentDetail';
 import UserProfile from './pages/UserProfile';
 import ChangePasswordForm from './pages/ChangePasswordForm';
 import StudentList from './pages/teacher/StudentList';
+import TeacherClasses from './pages/teacher/TeacherClasses';
+import CourseStudents from './pages/teacher/CourseStudents';
 import QuizReportDetails from './pages/admin/QuizReportDetails';
 
 function App() {
@@ -113,6 +115,16 @@ function App() {
             <Route path="/teacher/submissions" element={
               <ProtectedRoute allowedRoles={['TEACHER']}>
                 <SubmissionDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/teacher/classes" element={
+              <ProtectedRoute allowedRoles={['TEACHER']}>
+                <TeacherClasses />
+              </ProtectedRoute>
+            } />
+            <Route path="/teacher/classes/:courseId/students" element={
+              <ProtectedRoute allowedRoles={['TEACHER']}>
+                <CourseStudents />
               </ProtectedRoute>
             } />
             <Route path="/teacher/quizzes/students/:quizId" element={
