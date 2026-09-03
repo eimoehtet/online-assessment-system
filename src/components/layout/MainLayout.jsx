@@ -30,6 +30,9 @@ const MainLayout = () => {
       { label: 'Courses', path: '/admin/courses', icon: <BookOpen size={20} /> },
       { label: 'Students', path: '/admin/students', icon: <Users size={20} /> },
       { label: 'Reports', path: '/admin/reports', icon: <FileText size={20} /> },
+      { label: 'Change Password', path: '/change-password', icon: <User size={20} /> },
+      { label: 'User Profile', path: '/profile', icon: <User size={20} /> }
+
     ],
     TEACHER: [
       { label: 'Dashboard', path: '/teacher', icon: <LayoutDashboard size={20} /> },
@@ -37,12 +40,14 @@ const MainLayout = () => {
       { label: 'Quizzes', path: '/teacher/quizzes', icon: <FileText size={20} /> },
       { label: 'Submissions', path: '/teacher/submissions', icon: <CheckSquare size={20} /> },
       { label: 'Change Password', path: '/change-password', icon: <User size={20} /> },
+      { label: 'User Profile', path: '/profile', icon: <User size={20} /> }
     ],
     STUDENT: [
       { label: 'Dashboard', path: '/student', icon: <LayoutDashboard size={20} /> },
       { label: 'My Courses', path: '/student/courses', icon: <BookOpen size={20} /> },
       { label: 'My Results', path: '/student/results', icon: <CheckSquare size={20} /> },
       { label: 'Change Password', path: '/change-password', icon: <User size={20} /> },
+      { label: 'User Profile', path: '/profile', icon: <User size={20} /> }
     ],
   };
 
