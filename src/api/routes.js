@@ -59,6 +59,7 @@ export const apiRoutes = {
   createEnrollment: (enrollData) => apiClient.post("/enrollments", enrollData),
   bulkImportEnrollment: (data) => apiClient.post("/enrollments/bulk", data),
   deleteEnrollment: (id) => apiClient.delete(`/enrollments/${id}`),
+  updateEnrollment: (id, data) => apiClient.put(`/enrollments/${id}`, data),
   getEnrollmentsByCourse: (courseId, params) => apiClient.get(`/enrollments/courses/${courseId}`, { params }),
   getStudentsByQuizIdAndTeacherId: (quizId, teacherId, params) => apiClient.get(`/quizzes/${quizId}/teacher/${teacherId}`, { params }),
   getEnrollmentsByStudent: (studentId, params) => apiClient.get(`/enrollments/students/${studentId}`, { params }),

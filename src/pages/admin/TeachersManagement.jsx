@@ -27,7 +27,7 @@ const TeachersManagement = () => {
 
   async function fetchTeachers(page = 1) {
     try {
-      const response = await apiRoutes.getTeachers({ page });
+      const response = await apiRoutes.getTeachers({ page, search: nameSearch || undefined });
       setTeachers(response.data.data || []);
       setTotalPages(response.data.meta.totalPages || 1);
       setTotalTeachers(response.data.meta.total || 0);
@@ -45,10 +45,13 @@ const TeachersManagement = () => {
   };
 
   useEffect(() => {
-    fetchTeachers();
-  }, []);
+    const timer = setTimeout(() => { setCurrentPage(1); fetchTeachers(1); }, 300);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nameSearch]);
 
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
     if (showModal[0] && showModal[1]) {
       setFormData({
         name: showModal[1].name,
@@ -60,6 +63,8 @@ const TeachersManagement = () => {
     } else {
       setFormData(initialFormData);
     }
+    /* eslint-enable react-hooks/set-state-in-effect */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showModal]);
 
   const handleInputChange = (e) => {
@@ -104,12 +109,7 @@ const TeachersManagement = () => {
     }
   };
 
-    const filteredTeachers = teachers?.filter((teacher) => {
-    const nameMatch = teacher.name
-      .toLowerCase()
-      .includes(nameSearch.toLowerCase());
-    return nameMatch;
-  });
+    const filteredTeachers = teachers;
 
   return (
     <div className="mx-auto max-w-7xl">
@@ -142,16 +142,20 @@ const TeachersManagement = () => {
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Teacher ID</th>
+              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Courses</th>
               <th className="px-4 py-3">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 text-sm">
-            {loading ? <TableLoadingRow colSpan={5} label="Loading teachers…" /> : filteredTeachers.map(teacher => (
+            {loading ? <TableLoadingRow colSpan={7} label="Loading teachers…" /> : filteredTeachers.map((teacher, index) => (
               <tr key={teacher.id} className="hover:bg-slate-50">
-                <td className="whitespace-nowrap px-4 py-4 text-slate-600">{teachers.indexOf(teacher) + 1}</td>
+                <td className="whitespace-nowrap px-4 py-4 text-slate-600">{(currentPage - 1) * 10 + index + 1}</td>
                 <td className="whitespace-nowrap px-4 py-4 font-medium text-slate-950">{teacher.name}</td>
                 <td className="whitespace-nowrap px-4 py-4 text-slate-600">{teacher.email}</td>
                 <td className="whitespace-nowrap px-4 py-4 text-slate-600">{teacher.student_id || '-'}</td>
+                <td className="px-4 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${teacher.status === 1 ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{teacher.status === 1 ? 'Active' : 'Inactive'}</span></td>
+                <td className="px-4 py-4 text-slate-600">{teacher._count?.courses || 0}</td>
                 <td className="whitespace-nowrap px-4 py-4">
                   <div className="flex gap-2">
                     <button onClick={() => setShowModal([true, teacher])} className="rounded-lg p-2 text-yellow-600 transition hover:bg-yellow-50 cursor-pointer" title="Edit user">

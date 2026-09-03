@@ -11,6 +11,7 @@ const AdminDashboard = () => {
   const [publishedQuizzes, setPublishedQuizzes] = useState([]);
   const [allQuizzes, setAllQuizzes] = useState([]);
   const [totalQuizzes, setTotalQuizzes] = useState(0);
+  const [attention, setAttention] = useState({ inactiveUsers: 0, emptyCourses: 0, readyToRelease: 0 });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -23,6 +24,7 @@ const AdminDashboard = () => {
         setTotalQuizzes(stats.quizzes);
         setPublishedQuizzes(stats.publishedQuizzes || []);
         setAllQuizzes(stats.recentQuizzes || []);
+        setAttention(stats);
       } catch (error) {
         console.error('Error fetching data:', error);
       }

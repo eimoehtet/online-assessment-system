@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { apiRoutes } from "../../api/routes";
 import Papa from "papaparse";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronLeft, Download } from "lucide-react";
 import parseDateOfBirth from "../dateFormat";
 import { TableLoadingRow } from '../../components/ui/LoadingIndicator';
 
@@ -12,17 +12,19 @@ const EnrollmentDetail = () => {
   const [error, setError] = useState(null);
   const { courseId } = useParams();
   const [importing, setImporting] = useState(false);
-  const [shiftFilter, setShiftFilter] = useState("MORNING");
+  const [shiftFilter, setShiftFilter] = useState("");
   const [nameSearch, setNameSearch] = useState("");
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const [showAssignStudentModal, setShowAssignStudentModal] = useState(false);
+  const [course, setCourse] = useState(null);
 
 
   const fetchEnrollment = async (page = 1) => {
     try {
       setLoading(true);
-      const response = await apiRoutes.getEnrollmentsByCourse(courseId, { page });
+      const [response, courseResponse] = await Promise.all([apiRoutes.getEnrollmentsByCourse(courseId, { page, search: nameSearch || undefined, shift: shiftFilter || undefined }), apiRoutes.getCourseById(courseId)]);
+      setCourse(courseResponse.data.course);
       if (response.status == 200) {
         setEnrollment(response.data.data);
         setTotalPages(response.data.meta.totalPages || 1);
@@ -42,12 +44,11 @@ const EnrollmentDetail = () => {
   };
 
   useEffect(() => {
-    // The async fetch updates state only after the request resolves.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchEnrollment(currentPage);
+    const timer = setTimeout(() => fetchEnrollment(currentPage), 300);
+    return () => clearTimeout(timer);
     // fetchEnrollment intentionally remains local so mutation handlers can refresh the current page.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courseId, currentPage]);
+  }, [courseId, currentPage, nameSearch, shiftFilter]);
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -136,13 +137,34 @@ const EnrollmentDetail = () => {
     }
   };
 
-  const filteredEnrollments = enrollment?.filter((enroll) => {
-    const nameMatch = enroll.student.name
-      .toLowerCase()
-      .includes(nameSearch.toLowerCase());
-    const shiftMatch = shiftFilter ? enroll.shift === shiftFilter : true;
-    return nameMatch && shiftMatch;
-  });
+  const filteredEnrollments = enrollment;
+
+  const removeEnrollment = async (id, studentName) => {
+    if (!window.confirm(`Remove ${studentName} from this course? Their quiz history will remain available.`)) return;
+    try { await apiRoutes.deleteEnrollment(id); await fetchEnrollment(currentPage); }
+    catch (err) { setError(err.response?.data?.message || 'Failed to remove enrollment.'); }
+  };
+
+  const changeEnrollmentShift = async (enroll, shift) => {
+    try {
+      await apiRoutes.updateEnrollment(enroll.id, { course_id: enroll.course_id, student_id: enroll.student_id, shift });
+      await fetchEnrollment(currentPage);
+    } catch (err) { setError(err.response?.data?.message || 'Failed to update enrollment shift.'); }
+  };
+
+  const exportRoster = async () => {
+    try {
+      const first = await apiRoutes.getEnrollmentsByCourse(courseId, { page: 1, limit: 100, search: nameSearch || undefined, shift: shiftFilter || undefined });
+      const rows = [...(first.data.data || [])];
+      for (let page = 2; page <= first.data.meta.totalPages; page += 1) {
+        const response = await apiRoutes.getEnrollmentsByCourse(courseId, { page, limit: 100, search: nameSearch || undefined, shift: shiftFilter || undefined });
+        rows.push(...(response.data.data || []));
+      }
+      const csv = Papa.unparse(rows.map((row) => ({ Student_ID: row.student.student_id, Name: row.student.name, Email: row.student.email, Shift: row.shift, Gender: row.student.gender || '' })));
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a'); link.href = url; link.download = `${course?.code || 'course'}-roster.csv`; link.click(); URL.revokeObjectURL(url);
+    } catch (err) { setError(err.response?.data?.message || 'Failed to export this roster.'); }
+  };
 
   if (error) {
     return <div>Error: {error}</div>;
@@ -150,6 +172,8 @@ const EnrollmentDetail = () => {
 
   return (
     <div>
+      <Link to="/admin/courses" className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-blue-700 hover:underline"><ChevronLeft size={17} /> Courses</Link>
+      <div className="mb-6"><h1 className="text-3xl font-bold text-slate-950">{course?.name || 'Course Roster'}</h1><p className="mt-1 text-sm text-slate-500">{course?.code} · {course?.teacher?.name} · Manage enrolled students</p></div>
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center space-x-4">
           <input
@@ -162,9 +186,10 @@ const EnrollmentDetail = () => {
           <div className="relative">
             <select
               value={shiftFilter}
-              onChange={(event) => setShiftFilter(event.target.value)}
+              onChange={(event) => { setShiftFilter(event.target.value); setCurrentPage(1); }}
               className="w-full appearance-none rounded-lg border border-slate-300 bg-white py-2.5 pl-3 pr-9 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 lg:w-44"
             >
+              <option value="">All shifts</option>
               <option value="MORNING">Morning</option>
               <option value="AFTERNOON">Afternoon</option>
               <option value="EVENING">Evening</option>
@@ -176,6 +201,7 @@ const EnrollmentDetail = () => {
           </div>
         </div>
         <div className="flex items-center space-x-2">
+          <button onClick={exportRoster} disabled={!filteredEnrollments?.length} className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40"><Download size={16} /> Export CSV</button>
           <button className="bg-red-600 text-white text-sm px-4 py-2 rounded-md hover:bg-red-500 cursor-pointer" onClick={() =>setShowAssignStudentModal(true)}>
             Add Student
           </button>
@@ -208,11 +234,12 @@ const EnrollmentDetail = () => {
               <th className="px-4 py-3">Gender</th>
               <th className="px-4 py-3">Phone</th>
               <th className="px-4 py-3">Address</th>
+              <th className="px-4 py-3">Action</th>
             </tr>
           </thead>
 
           <tbody className="divide-y divide-slate-100 text-sm text-slate-500">
-            {loading ? <TableLoadingRow colSpan={9} label="Loading enrolled students…" /> : filteredEnrollments?.map((enroll, index) => (
+            {loading ? <TableLoadingRow colSpan={10} label="Loading enrolled students…" /> : filteredEnrollments?.length === 0 ? <tr><td colSpan="10" className="p-10 text-center text-slate-500">No enrolled students match the current filters.</td></tr> : filteredEnrollments?.map((enroll, index) => (
               <tr key={enroll.id} className="hover:bg-slate-50">
                 <td className="whitespace-nowrap px-4 py-4">
                   {index + 1}
@@ -234,7 +261,7 @@ const EnrollmentDetail = () => {
                   {enroll.student.email}
                 </td>
                 <td className="whitespace-nowrap px-4 py-4">
-                  {enroll.shift}
+                  <select aria-label={`Shift for ${enroll.student.name}`} value={enroll.shift} onChange={(event) => changeEnrollmentShift(enroll, event.target.value)} className="rounded border border-slate-300 bg-white px-2 py-1"><option value="MORNING">Morning</option><option value="AFTERNOON">Afternoon</option><option value="EVENING">Evening</option></select>
                 </td>
                 <td className="whitespace-nowrap px-4 py-4">
                   {enroll.student.gender}
@@ -245,6 +272,7 @@ const EnrollmentDetail = () => {
                 <td className="whitespace-nowrap px-4 py-4">
                   {enroll.student.address}
                 </td>
+                <td className="px-4 py-4"><button onClick={() => removeEnrollment(enroll.id, enroll.student.name)} className="text-sm font-semibold text-red-600 hover:underline">Remove</button></td>
               </tr>
             ))}
           </tbody>

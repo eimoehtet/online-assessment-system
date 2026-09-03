@@ -32,7 +32,7 @@ const StudentsManagement = () => {
 
   async function fetchStudents(page = 1) {
     try {
-      const response = await apiRoutes.getStudents({ page });
+      const response = await apiRoutes.getStudents({ page, search: nameSearch || undefined });
       setStudents(response.data.data || []);
       console.log('Fetched students:', response.data.data);
       setTotalPages(response.data.meta.totalPages || 1);
@@ -51,10 +51,13 @@ const StudentsManagement = () => {
   };
 
   useEffect(() => {
-    fetchStudents();
-  }, []);
+    const timer = setTimeout(() => { setCurrentPage(1); fetchStudents(1); }, 300);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nameSearch]);
 
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
     if (showModal[0] && showModal[1]) {
       setFormData({
         name: showModal[1].name,
@@ -70,6 +73,8 @@ const StudentsManagement = () => {
     } else {
       setFormData(initialFormData);
     }
+    /* eslint-enable react-hooks/set-state-in-effect */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showModal]);
 
   const handleInputChange = (e) => {
@@ -113,12 +118,7 @@ const StudentsManagement = () => {
     };
   };
 
-    const filteredStudents = students?.filter((student) => {
-    const nameMatch = student.name
-      .toLowerCase()
-      .includes(nameSearch.toLowerCase());
-    return nameMatch;
-  });
+    const filteredStudents = students;
 
   return (
     <div className="mx-auto max-w-7xl">
@@ -151,13 +151,15 @@ const StudentsManagement = () => {
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Role</th>
               <th className="px-4 py-3">Student ID</th>
+              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Courses</th>
               <th className="px-4 py-3">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 text-sm">
-            {loading ? <TableLoadingRow colSpan={6} label="Loading students…" /> : filteredStudents.map(student => (
+            {loading ? <TableLoadingRow colSpan={8} label="Loading students…" /> : filteredStudents.map((student, index) => (
               <tr key={student.id} className="hover:bg-slate-50">
-                <td className="whitespace-nowrap px-4 py-4 text-slate-600">{students.indexOf(student) + 1}</td>
+                <td className="whitespace-nowrap px-4 py-4 text-slate-600">{(currentPage - 1) * 10 + index + 1}</td>
                 <td className="whitespace-nowrap px-4 py-4 font-medium text-slate-950">{student.name}</td>
                 <td className="whitespace-nowrap px-4 py-4 text-slate-600">{student.email}</td>
                 <td className="whitespace-nowrap px-4 py-4">
@@ -172,6 +174,8 @@ const StudentsManagement = () => {
                   </span>
                 </td>
                 <td className="whitespace-nowrap px-4 py-4 text-slate-600">{student.student_id || '-'}</td>
+                <td className="px-4 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${student.status === 1 ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{student.status === 1 ? 'Active' : 'Inactive'}</span></td>
+                <td className="px-4 py-4 text-slate-600">{student._count?.enrollments || 0}</td>
                 <td className="whitespace-nowrap px-4 py-4">
                   <div className="flex gap-2">
                     <button onClick={() => setShowModal([true, student])} className="rounded-lg p-2 text-yellow-600 transition hover:bg-yellow-50 cursor-pointer" title="Edit user">
