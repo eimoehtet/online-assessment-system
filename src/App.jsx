@@ -16,6 +16,7 @@ import TeacherDashboard from './pages/teacher/Dashboard';
 import QuizManagement from './pages/teacher/QuizManagement';
 import QuizEditor from './pages/teacher/QuizEditor';
 import SubmissionDashboard from './pages/teacher/SubmissionDashboard';
+import SubmissionReview from './pages/teacher/SubmissionReview';
 import StudentDashboard from './pages/student/Dashboard';
 import StudentCourses from './pages/student/StudentCourses';
 import StudentQuizzes from './pages/student/StudentQuizzes';
@@ -115,6 +116,11 @@ function App() {
             <Route path="/teacher/submissions" element={
               <ProtectedRoute allowedRoles={['TEACHER']}>
                 <SubmissionDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/teacher/submissions/:submissionId" element={
+              <ProtectedRoute allowedRoles={['TEACHER']}>
+                <SubmissionReview />
               </ProtectedRoute>
             } />
             <Route path="/teacher/classes" element={

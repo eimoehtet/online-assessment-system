@@ -101,6 +101,11 @@ const StudentResults = () => {
                   </div>
                 </div>
               </div>
+              {sub.status === 'RELEASED' && sub.feedback && (
+                <div className="mb-4 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">
+                  <span className="font-semibold">Overall teacher feedback: </span>{sub.feedback}
+                </div>
+              )}
               <div className="mt-4">
                 <button
                   onClick={() => toggleAnswers(sub.id)}

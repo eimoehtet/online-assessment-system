@@ -73,5 +73,7 @@ export const apiRoutes = {
   releaseSubmissionScore: (submissionId) => apiClient.post(`/submissions/${submissionId}/release`),
   recordBehavior: (submissionId, behaviorData) => apiClient.post(`/submissions/${submissionId}/behavior-logs`, behaviorData),
   getBehaviorSummary: (submissionId) => apiClient.get(`/submissions/${submissionId}/behavior-summary`),
+  getBehaviorLogs: (submissionId, params) => apiClient.get(`/submissions/${submissionId}/behavior-logs`, { params }),
   getSubmissionsByQuizId: (quizId) => apiClient.get(`/submissions/quiz/${quizId}`),
+  getQuizSubmissionInsights: (quizId) => apiClient.get(`/submissions/quiz/${quizId}/insights`),
 };
