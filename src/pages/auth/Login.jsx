@@ -1,6 +1,5 @@
-import { Navigate } from 'react-router-dom';
 import { useState } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import ppiuLogo from '../../assets/ppiu-logo.png';
 import { Eye, EyeOff } from 'lucide-react';
@@ -14,15 +13,13 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { user, login, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   if (authLoading) {
     return <LoadingIndicator label="Restoring your session…" className="min-h-screen bg-slate-50" />;
   }
 
   if (user) {
-    const destination = location.state?.from?.pathname || `/${user.role.toLowerCase()}`;
-    return <Navigate to={destination} replace />;
+    return <Navigate to={`/${user.role.toLowerCase()}`} replace />;
   }
 
   const handleSubmit = async (e) => {
@@ -32,8 +29,7 @@ const Login = () => {
 
     try {
       const user = await login(email, password);
-      const from = location.state?.from?.pathname || `/${user.role.toLowerCase()}`;
-      navigate(from, { replace: true });
+      navigate(`/${user.role.toLowerCase()}`, { replace: true });
     } catch (err) {
       setError(err?.response?.data?.message || 'Invalid email or password');
     } finally {

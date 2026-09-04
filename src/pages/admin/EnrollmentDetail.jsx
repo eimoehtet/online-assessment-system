@@ -16,6 +16,7 @@ const EnrollmentDetail = () => {
   const [nameSearch, setNameSearch] = useState("");
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [showAssignStudentModal, setShowAssignStudentModal] = useState(false);
   const [course, setCourse] = useState(null);
 
@@ -29,6 +30,7 @@ const EnrollmentDetail = () => {
         setEnrollment(response.data.data);
         setTotalPages(response.data.meta.totalPages || 1);
         setCurrentPage(response.data.meta.page || 1);
+        setPageSize(response.data.meta.limit || 10);
       } else {
         setError(response.data.message);
       }
@@ -242,7 +244,7 @@ const EnrollmentDetail = () => {
             {loading ? <TableLoadingRow colSpan={10} label="Loading enrolled students…" /> : filteredEnrollments?.length === 0 ? <tr><td colSpan="10" className="p-10 text-center text-slate-500">No enrolled students match the current filters.</td></tr> : filteredEnrollments?.map((enroll, index) => (
               <tr key={enroll.id} className="hover:bg-slate-50">
                 <td className="whitespace-nowrap px-4 py-4">
-                  {index + 1}
+                  {(currentPage - 1) * pageSize + index + 1}
                 </td>
                 <td className="whitespace-nowrap px-4 py-4 ">
                   {enroll.student.student_id}
