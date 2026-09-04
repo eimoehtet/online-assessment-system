@@ -302,6 +302,7 @@ const EnrollmentDetail = () => {
           <div className="bg-white p-6 rounded-lg w-[400px]">
             <h2 className="text-lg font-semibold mb-4">Add Student</h2>
             <form className="space-y-4" onSubmit= {handleAssignStudent}>
+              <span className="text-sm text-slate-500 block mb-4">Student must already exist in the Student List. For new students, please add them to the Student List first.<Link to={`/admin/students`} className="text-blue-500 hover:underline"> Go to Student List</Link></span>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Student ID
