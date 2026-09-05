@@ -1,3 +1,4 @@
+import Alert from '../../components/ui/Alert';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiRoutes } from '../../api/routes';
@@ -31,7 +32,7 @@ const StudentCourses = () => {
         <p className="mt-2 text-slate-600">Select a course to view available quizzes.</p>
       </div>
 
-      {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
+      {error && <Alert className="mb-4">{error}</Alert>}
 
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         {loading ? <LoadingIndicator label="Loading courses…" className="col-span-full" /> : enrollments.length === 0 ? (

@@ -1,3 +1,4 @@
+import Alert from '../../components/ui/Alert';
 import { useState, useEffect } from "react";
 import { apiRoutes } from "../../api/routes";
 import { Eye } from "lucide-react";
@@ -28,7 +29,7 @@ const Reports = () => {
     fetchReportData();
   }, [page]);
 
-  if (error) return <div className="text-sm text-red-600">{error}</div>;
+  if (error) return <Alert className="mb-4">{error}</Alert>;
 
   return (
     <div className="p-4">

@@ -1,3 +1,4 @@
+import Alert from '../../components/ui/Alert';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertTriangle, CheckCircle2, ChevronDown, Clock, Search, ShieldAlert, User } from 'lucide-react';
@@ -110,7 +111,7 @@ const SubmissionDashboard = () => {
       </div>
       {hasFilters && <button onClick={() => { setSearchInput(''); setParams(new URLSearchParams({ workflow })); }} className="mt-3 text-sm font-semibold text-blue-700 hover:underline">Clear filters</button>}
     </div>
-    {error && <div className="mb-4 flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"><span>{error}</span><button onClick={fetchSubmissions} className="underline">Retry</button></div>}
+    {error && <Alert className="mb-4"><div className="flex items-center justify-between gap-3"><span>{error}</span><button onClick={fetchSubmissions} className="underline">Retry</button></div></Alert>}
     {insights && <QuizInsights insights={insights} />}
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       {loading ? <LoadingIndicator label="Loading submissions…" /> : submissions.length === 0 ? <div className="p-12 text-center"><p className="font-semibold text-slate-800">{workflow === 'NEEDS_GRADING' ? 'Nothing needs grading' : hasFilters ? 'No submissions match these filters' : 'No submissions yet'}</p><p className="mt-1 text-sm text-slate-500">{hasFilters ? 'Try clearing or changing the current filters.' : 'Student attempts will appear here.'}</p></div> : <>

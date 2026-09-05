@@ -1,3 +1,4 @@
+import Alert from '../../components/ui/Alert';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, Users } from 'lucide-react';
@@ -36,7 +37,7 @@ const TeacherClasses = () => {
         <p className="mt-2 text-slate-600">View students enrolled in each of your assigned courses.</p>
       </div>
 
-      {error && <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
+      {error && <Alert className="mb-4">{error}</Alert>}
 
       {loading ? (
         <LoadingIndicator label="Loading classes…" />

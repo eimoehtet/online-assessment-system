@@ -1,3 +1,4 @@
+import Alert from '../components/ui/Alert';
 import { useState } from 'react';
 import {apiRoutes} from '../api/routes';
 import { Eye, EyeOff } from 'lucide-react';
@@ -42,8 +43,8 @@ const ChangePasswordForm = () => {
   return (
     <div className="max-w-md mt-10 p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-2xl font-semibold mb-4">Change Password</h2>
-      {error && <div className="mb-4 text-red-600">{error}</div>}
-      {successMessage && <div className="mb-4 text-blue-600">{successMessage}</div>}
+      {error && <Alert className="mb-4">{error}</Alert>}
+      {successMessage && <Alert variant="success" className="mb-4">{successMessage}</Alert>}
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">Current Password</label>

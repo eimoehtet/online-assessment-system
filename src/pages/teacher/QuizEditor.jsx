@@ -1,4 +1,7 @@
-import { useState, useEffect } from 'react';
+import { validateQuiz } from '../../lib/quizValidation';
+import Alert from '../../components/ui/Alert';
+import { showAlert } from '../../lib/alerts';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { apiRoutes } from '../../api/routes';
 import LoadingIndicator from '../../components/ui/LoadingIndicator';
@@ -45,6 +48,8 @@ const QuizEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEditing = !!id;
+  const savedQuizId = useRef(id);
+  const saveInProgress = useRef(false);
 
   const [loading, setLoading] = useState(isEditing);
   const [courses, setCourses] = useState([]);
@@ -97,9 +102,6 @@ const QuizEditor = () => {
               : (q.options || [])
           }))
         });
-      } else {
-        // Add one default question for new quiz
-        addQuestion();
       }
     } catch {
       setError('Failed to load data');
@@ -143,7 +145,7 @@ const QuizEditor = () => {
   const duplicateQuestion = (index) => {
     const q = formData.questions[index];
     if (getTotalPoints(formData.questions) + (Number(q.points) || 0) > 100) {
-      window.alert('The total points for a quiz should not exceed 100.');
+      showAlert('The total points for a quiz should not exceed 100.', { variant: 'warning' });
       return;
     }
     const newQ = { 
@@ -166,7 +168,7 @@ const QuizEditor = () => {
       ), 0);
 
       if (proposedTotal > 100) {
-        window.alert('The total points for a quiz should not exceed 100.');
+        showAlert('The total points for a quiz should not exceed 100.', { variant: 'warning' });
         return;
       }
     }
@@ -256,11 +258,14 @@ const QuizEditor = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (getTotalPoints(formData.questions) > 100) {
-      window.alert('The total points for a quiz should not exceed 100.');
+    if (saveInProgress.current) return;
+    const validationError = validateQuiz(formData);
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
+    saveInProgress.current = true;
     setSaving(true);
     setError('');
 
@@ -275,18 +280,15 @@ const QuizEditor = () => {
         time_limit: formData.time_limit === '' ? null : parseInt(formData.time_limit, 10)
       };
 
-      let quizId = id;
-      if (isEditing) {
-        await apiRoutes.updateQuiz(id, quizPayload);
+      let quizId = savedQuizId.current;
+      if (quizId) {
+        await apiRoutes.updateQuiz(quizId, quizPayload);
       } else {
         const res = await apiRoutes.createQuiz(quizPayload);
         quizId = res.data.id;
+        savedQuizId.current = quizId;
       }
 
-      // Handle Questions
-      // This is a naive implementation: it will create/update one by one.
-      // In a real app, you'd want a bulk endpoint or more sophisticated diffing.
-      
       // Get existing questions to know which ones to delete
       const existingQuestionsRes = await apiRoutes.getQuestions(quizId);
       const existingQuestions = existingQuestionsRes.data;
@@ -315,16 +317,23 @@ const QuizEditor = () => {
         if (q.id) {
           await apiRoutes.updateQuestion(quizId, q.id, qPayload);
         } else {
-          await apiRoutes.createQuestion(quizId, qPayload);
+          const response = await apiRoutes.createQuestion(quizId, qPayload);
+          setFormData((current) => ({
+            ...current,
+            questions: current.questions.map((question, index) => index === i ? { ...question, id: response.data.id } : question),
+          }));
         }
       }
 
-      alert('Quiz and all questions saved successfully!');
-      if (!isEditing) navigate(`/teacher/quizzes/edit/${quizId}`);
-      else fetchInitialData(); // Refresh to get correct IDs from DB
+      showAlert('Quiz and all questions saved successfully!', { variant: 'success' });
+      navigate('/teacher/quizzes');
     } catch (err) {
-      setError(err?.response?.data?.message || 'Failed to save quiz. Please check all fields.');
+      const reason = err?.response?.data?.message || 'Please try again.';
+      setError(savedQuizId.current
+        ? `The quiz was saved, but some changes could not be saved. Retry Save All Changes to update the same quiz. ${reason}`
+        : `Could not save the quiz. ${reason}`);
     } finally {
+      saveInProgress.current = false;
       setSaving(false);
     }
   };
@@ -359,9 +368,9 @@ const QuizEditor = () => {
         </div>
       </header>
 
-      {error && <div className="sticky top-32 z-10 mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 md:top-20">{error}</div>}
+      {error && <Alert className="mb-4">{error}</Alert>}
 
-      <div className="grid items-start gap-8 lg:grid-cols-[22rem_1fr]">
+      <fieldset disabled={saving} className="grid min-w-0 items-start gap-8 lg:grid-cols-[22rem_1fr]">
         {/* Sidebar: Quiz Details */}
         <aside className="space-y-4 lg:sticky lg:top-24">
           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -378,8 +387,17 @@ const QuizEditor = () => {
               </select>
             </div>
             <div className="mb-4">
-              <label className="mb-2 block text-sm font-medium text-slate-700">Deadline</label>
-              <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="datetime-local" name="end_date" value={formData.end_date} onChange={handleQuizChange} required />
+              <label htmlFor="quiz-deadline" className="mb-2 block text-sm font-medium text-slate-700">Deadline (date and time)</label>
+              <div className="group relative">
+                <input id="quiz-deadline" aria-describedby="quiz-deadline-help" className={`w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 ${!formData.end_date ? 'text-transparent focus:text-slate-950' : 'text-slate-950'}`} type="datetime-local" name="end_date" value={formData.end_date} onChange={handleQuizChange} onClick={(event) => {
+                  try {
+                    event.currentTarget.showPicker?.();
+                  } catch {
+                    // Keep native input interaction available when the browser cannot open the picker.
+                  }
+                }} required />
+                {!formData.end_date && <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400 group-focus-within:hidden">Select date and time</span>}
+              </div>
             </div>
             <div className="mb-4">
               <label className="mb-2 block text-sm font-medium text-slate-700">Time Limit (minutes, optional)</label>
@@ -561,11 +579,11 @@ const QuizEditor = () => {
               className="flex w-full cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-slate-300 p-8 font-bold text-slate-500 transition hover:border-blue-300 hover:bg-red-50 hover:text-blue-700"
             >
               <Plus size={32} />
-              Add Another Question
+              Add Question
             </button>
           </div>
         </section>
-      </div>
+      </fieldset>
     </div>
   );
 };

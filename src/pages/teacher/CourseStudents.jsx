@@ -1,3 +1,4 @@
+import Alert from '../../components/ui/Alert';
 import { useEffect, useState } from 'react';
 import { ChevronDown, ChevronLeft, Search, Users } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
@@ -91,7 +92,7 @@ const CourseStudents = () => {
         </label>
       </div>
 
-      {error && <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
+      {error && <Alert className="mb-4">{error}</Alert>}
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">

@@ -1,3 +1,6 @@
+import Alert from '../../components/ui/Alert';
+import { confirmAlert } from '../../lib/alerts';
+import { showAlert } from '../../lib/alerts';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiRoutes } from '../../api/routes';
@@ -31,12 +34,12 @@ const StudentQuizzes = () => {
   }, [courseId]);
 
   const handleStartQuiz = async (quizId) => {
-    if (window.confirm('Are you ready to start the quiz? The timer will begin immediately.')) {
+    if (await confirmAlert('Are you ready to start the quiz? The timer will begin immediately.')) {
       try {
         const res = await apiRoutes.startSubmission({ quiz_id: quizId });
         navigate(`/student/quiz/take/${res.data.id}`);
       } catch (err) {
-        alert(err?.response?.data?.message || 'Failed to start quiz');
+        showAlert(err?.response?.data?.message || 'Failed to start quiz', { variant: 'error' });
       }
     }
   };
@@ -66,7 +69,7 @@ const StudentQuizzes = () => {
         <div><h1 className="text-3xl font-bold tracking-tight text-slate-950">{course?.name || 'Course Quizzes'}</h1><p className="mt-1 text-sm text-slate-500">{course?.code} · {course?.teacher?.name} · <span className="capitalize">{enrollment?.shift?.toLowerCase()} shift</span></p></div>
       </div>
 
-      {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
+      {error && <Alert className="mb-4">{error}</Alert>}
 
       <div className="space-y-4">
         {loading ? <LoadingIndicator label="Loading quizzes…" /> : quizzes.length === 0 ? (

@@ -1,8 +1,9 @@
+import Alert from '../../components/ui/Alert';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import ppiuLogo from '../../assets/ppiu-logo.png';
 import { apiRoutes } from '../../api/routes';
-import { ArrowLeft, CheckCircle, Mail } from 'lucide-react';
+import { ArrowLeft, Mail } from 'lucide-react';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -41,17 +42,14 @@ const ForgotPassword = () => {
         </p>
 
         {error && (
-          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-            {error}
-          </div>
+          <Alert className="mb-4">{error}</Alert>
         )}
 
         {message ? (
           <div className="space-y-4">
-            <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-center text-sm font-medium text-green-800">
-              <CheckCircle className="mx-auto mb-2 text-green-600" size={32} />
+            <Alert variant="success">
               <p>{message}</p>
-            </div>
+            </Alert>
             <p className="text-xs text-slate-400 text-center">
               Please check your email inbox (and spam folder) for instructions.
             </p>

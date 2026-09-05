@@ -1,3 +1,6 @@
+import Alert from '../../components/ui/Alert';
+import { confirmAlert } from '../../lib/alerts';
+import { showAlert } from '../../lib/alerts';
 import { useState, useEffect } from 'react';
 import { apiRoutes } from '../../api/routes';
 import { SquarePen, Trash2, BookPlus, BookOpen, Users, FileText, Search, ChevronDown } from 'lucide-react';
@@ -88,12 +91,12 @@ const CourseManagement = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this course?')) {
+    if (await confirmAlert('Are you sure you want to delete this course?')) {
       try {
         await apiRoutes.deleteCourse(id);
         fetchData();
       } catch {
-        alert('Failed to delete course');
+        showAlert('Failed to delete course', { variant: 'error' });
       }
     }
   };
@@ -103,7 +106,7 @@ const CourseManagement = () => {
       await apiRoutes.toggleCourseStatus(id);
       fetchData();
     } catch {
-      alert('Failed to toggle course status');
+      showAlert('Failed to toggle course status', { variant: 'error' });
     }
   };
 
@@ -117,7 +120,7 @@ const CourseManagement = () => {
         </button>
       </div>
 
-      {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
+      {error && <Alert className="mb-4">{error}</Alert>}
 
       <div className="mb-6 grid gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-3">
         <label className="relative"><span className="sr-only">Search courses</span><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name or code…" className="w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-3 text-sm" /></label>

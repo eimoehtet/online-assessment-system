@@ -1,8 +1,9 @@
+import Alert from '../../components/ui/Alert';
 import { useState } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import ppiuLogo from '../../assets/ppiu-logo.png';
 import { apiRoutes } from '../../api/routes';
-import { Eye, EyeOff, CheckCircle, ArrowLeft, Lock } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, Lock } from 'lucide-react';
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
@@ -63,24 +64,21 @@ const ResetPassword = () => {
         </p>
 
         {!token && (
-          <div className="mb-4 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+          <Alert variant="warning" className="mb-4">
             Missing reset token. Please click the reset link in your email or request a new one.
-          </div>
+          </Alert>
         )}
 
         {error && (
-          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-            {error}
-          </div>
+          <Alert className="mb-4">{error}</Alert>
         )}
 
         {success ? (
           <div className="space-y-4 text-center">
-            <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm font-medium text-green-800">
-              <CheckCircle className="mx-auto mb-2 text-green-600" size={36} />
+            <Alert variant="success">
               <p className="font-semibold text-base mb-1">Password Reset Successful!</p>
               <p className="text-xs text-green-700">Your password has been changed successfully. You can now log in with your new password.</p>
-            </div>
+            </Alert>
 
             <button
               type="button"

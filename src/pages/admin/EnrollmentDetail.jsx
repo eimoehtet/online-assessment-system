@@ -1,3 +1,6 @@
+import Alert from '../../components/ui/Alert';
+import { confirmAlert } from '../../lib/alerts';
+import { showAlert } from '../../lib/alerts';
 import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { apiRoutes } from "../../api/routes";
@@ -98,8 +101,9 @@ const EnrollmentDetail = () => {
 
           if (errors.length > 0) {
             console.error("Validation errors in CSV:", errors);
-            alert(
+            showAlert(
               `Validation errors found in CSV:\n\n${errors.slice(0, 5).join("\n")}${errors.length > 5 ? `\n...and ${errors.length - 5} more` : ""}\n\nPlease fix the date of birth values (use DD/MM/YYYY or YYYY-MM-DD) in your CSV and try again.`,
+              { variant: 'error' },
             );
             setImporting(false);
             return;
@@ -109,11 +113,11 @@ const EnrollmentDetail = () => {
             course_id: courseId,
             students,
           });
-          alert("Import successful");
+          showAlert("Import successful", { variant: 'success' });
           fetchEnrollment();
         } catch (e) {
           console.error(e);
-          alert("Import failed: " + (e.response?.data?.message || e.message));
+          showAlert("Import failed: " + (e.response?.data?.message || e.message), { variant: 'error' });
         } finally {
           setImporting(false);
         }
@@ -130,19 +134,19 @@ const EnrollmentDetail = () => {
 
     try {
       await apiRoutes.createEnrollment({courseId, studentId, shift});
-      alert("Student assigned successfully");
+      showAlert("Student assigned successfully", { variant: 'success' });
       setShowAssignStudentModal(false);
       fetchEnrollment();
     } catch (e) {
       console.error(e);
-      alert("Failed to assign student: " + (e.response?.data?.message || e.message));
+      showAlert("Failed to assign student: " + (e.response?.data?.message || e.message), { variant: 'error' });
     }
   };
 
   const filteredEnrollments = enrollment;
 
   const removeEnrollment = async (id, studentName) => {
-    if (!window.confirm(`Remove ${studentName} from this course? Their quiz history will remain available.`)) return;
+    if (!await confirmAlert(`Remove ${studentName} from this course? Their quiz history will remain available.`)) return;
     try { await apiRoutes.deleteEnrollment(id); await fetchEnrollment(currentPage); }
     catch (err) { setError(err.response?.data?.message || 'Failed to remove enrollment.'); }
   };
@@ -169,7 +173,7 @@ const EnrollmentDetail = () => {
   };
 
   if (error) {
-    return <div>Error: {error}</div>;
+    return <Alert>{error}</Alert>;
   }
 
   return (

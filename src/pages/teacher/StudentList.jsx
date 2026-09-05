@@ -1,3 +1,5 @@
+import Alert from '../../components/ui/Alert';
+import { showAlert } from '../../lib/alerts';
 import { useState, useEffect, useRef } from 'react';
 import { apiRoutes } from '../../api/routes';
 import { useParams } from 'react-router-dom';
@@ -66,7 +68,7 @@ const StudentList = () => {
       await apiRoutes.updateQuizAttendance({ quiz_id: quizId, student_id, status });
       await Promise.all([fetchStudents(currentPage), getAttendance(quizId)]);
     } catch {
-      alert('Failed to toggle user status');
+      showAlert('Failed to toggle user status', { variant: 'error' });
     };
   };
 
@@ -100,7 +102,7 @@ const mergedStudents = students.map(student => {
           />
         </div>
 
-      {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
+      {error && <Alert className="mb-4">{error}</Alert>}
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-slate-200">

@@ -1,3 +1,4 @@
+import Alert from '../../components/ui/Alert';
 import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -47,7 +48,7 @@ const Login = () => {
           Log in to your account
         </p>
 
-        {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
+        {error && <Alert className="mb-4">{error}</Alert>}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>

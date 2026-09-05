@@ -1,3 +1,6 @@
+import Alert from '../../components/ui/Alert';
+import { confirmAlert } from '../../lib/alerts';
+import { showAlert } from '../../lib/alerts';
 import { useState, useEffect } from 'react';
 import { apiRoutes } from '../../api/routes';
 import { SquarePen, Trash2, UserPlus, KeyIcon, Eye, EyeOff } from 'lucide-react';
@@ -99,12 +102,12 @@ const StudentsManagement = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
+    if (await confirmAlert('Are you sure you want to delete this user?')) {
       try {
         await apiRoutes.deleteUser(id);
         fetchStudents();
       } catch {
-        alert('Failed to delete user');
+        showAlert('Failed to delete user', { variant: 'error' });
       }
     }
   };
@@ -114,7 +117,7 @@ const StudentsManagement = () => {
       await apiRoutes.toggleUserStatus(id);
       fetchStudents();
     } catch {
-      alert('Failed to toggle user status');
+      showAlert('Failed to toggle user status', { variant: 'error' });
     };
   };
 
@@ -140,7 +143,7 @@ const StudentsManagement = () => {
           <p className="text-sm font-semibold text-slate-700">Total students: {totalStudents}</p>
         </div>
 
-      {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
+      {error && <Alert className="mb-4">{error}</Alert>}
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-slate-200">

@@ -1,3 +1,6 @@
+import Alert from '../../components/ui/Alert';
+import { confirmAlert } from '../../lib/alerts';
+import { showAlert } from '../../lib/alerts';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiRoutes } from '../../api/routes';
@@ -30,12 +33,12 @@ const QuizManagement = () => {
   }, [teacherId]);
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this quiz?')) {
+    if (await confirmAlert('Are you sure you want to delete this quiz?')) {
       try {
         await apiRoutes.deleteQuiz(id);
         fetchData();
       } catch {
-        alert('Failed to delete quiz');
+        showAlert('Failed to delete quiz', { variant: 'error' });
       }
     }
   };
@@ -53,7 +56,7 @@ const QuizManagement = () => {
         </button>
       </div>
 
-      {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
+      {error && <Alert className="mb-4">{error}</Alert>}
 
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {loading ? <LoadingIndicator label="Loading quizzes…" className="col-span-full" /> : quizzes.length === 0 ? (

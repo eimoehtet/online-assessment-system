@@ -1,3 +1,6 @@
+import Alert from '../../components/ui/Alert';
+import { confirmAlert } from '../../lib/alerts';
+import { showAlert } from '../../lib/alerts';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiRoutes } from '../../api/routes';
@@ -179,7 +182,7 @@ const QuizTake = () => {
       }).length;
 
       if (unansweredCount > 0) {
-        const confirmed = window.confirm(
+        const confirmed = await confirmAlert(
           `You have ${unansweredCount} unanswered question${unansweredCount === 1 ? '' : 's'}. Submit anyway?`
         );
         if (!confirmed) return;
@@ -205,10 +208,10 @@ const QuizTake = () => {
         })),
       });
       
-      alert('Quiz submitted successfully. Your score will be available after teacher review.');
+      showAlert('Quiz submitted successfully. Your score will be available after teacher review.', { variant: 'success' });
       navigate('/student/results');
     } catch (err) {
-      alert(err?.response?.data?.message || 'Failed to complete submission');
+      showAlert(err?.response?.data?.message || 'Failed to complete submission', { variant: 'error' });
     } finally {
       setIsSubmitting(false);
     }
@@ -246,7 +249,7 @@ const QuizTake = () => {
   };
 
   if (loading) return <LoadingIndicator label="Preparing your quiz environment…" className="min-h-screen" />;
-  if (error) return <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>;
+  if (error) return <Alert className="mb-4">{error}</Alert>;
   if (questions.length === 0) return <div className="text-sm text-slate-600">No questions found for this quiz.</div>;
 
   const answeredCount = questions.filter((question) => {

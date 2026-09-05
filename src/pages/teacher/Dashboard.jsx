@@ -1,3 +1,4 @@
+import Alert from '../../components/ui/Alert';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -51,7 +52,7 @@ const TeacherDashboard = () => {
       <LoadingIndicator label="Loading dashboard…" />
     </div>
   );
-  if (error) return <div>Error: {error}</div>;
+  if (error) return <Alert>{error}</Alert>;
 
   return (
     <div className="mx-auto max-w-7xl">

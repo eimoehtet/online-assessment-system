@@ -1,3 +1,4 @@
+import Alert from '../../components/ui/Alert';
 
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -31,7 +32,7 @@ const QuizReportDetails = () => {
       <h1 className="text-2xl font-bold mb-4">Quiz Report Details</h1>
       <h2 className="text-xl font-semibold mb-1">{insights?.quiz?.title || 'Quiz'}</h2>
       <p className="mb-4 text-sm text-slate-500">{insights?.quiz?.course?.code} · {insights?.quiz?.course?.name}</p>
-      {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+      {error && <Alert className="mb-4">{error}</Alert>}
       {insights && <div className="mb-5 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">{[['Enrolled', insights.participation.enrolled_students], ['Attempted', insights.participation.unique_students], ['No attempt', insights.participation.no_attempt], ['Completion', `${insights.participation.completion_rate}%`], ['Average', insights.scores.average ?? '—'], ['Awaiting grading', insights.awaiting_grading]].map(([label, value]) => <div key={label} className="rounded-lg border border-slate-200 bg-white p-3"><div className="text-xl font-bold">{value}</div><div className="text-xs text-slate-500">{label}</div></div>)}</div>}
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
