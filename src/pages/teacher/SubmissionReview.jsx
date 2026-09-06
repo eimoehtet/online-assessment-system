@@ -124,7 +124,7 @@ const SubmissionReview = () => {
     <Link to={`/teacher/submissions?${searchParams.toString()}`} className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:underline"><ArrowLeft size={17} /> Back to submissions</Link>
     <header className="mb-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div><p className="text-sm font-semibold text-blue-700">{submission.quiz?.course?.code} · {submission.quiz?.course?.name}</p><h1 className="mt-1 text-2xl font-bold text-slate-950">{submission.quiz?.title}</h1><p className="mt-2 text-sm text-slate-600">{submission.student?.name} · {submission.student?.student_id || submission.student?.email}</p><p className="mt-1 text-xs text-slate-500">Submitted {format(new Date(submission.completed_at || submission.submitted_at), 'PPP pp')}</p></div><span className="w-fit rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">{submission.status.replaceAll('_', ' ')}</span></div>
-      <div className="mt-5 grid gap-3 sm:grid-cols-4"><Metric label="Current score" value={`${currentScore} / ${maximumScore}`} /><Metric label="Percentage" value={maximumScore ? `${Math.round(currentScore / maximumScore * 1000) / 10}%` : '—'} /><Metric label="Score breakdown" value={`${submission.auto_score || 0} auto + ${submission.manual_score || 0} manual`} /><Metric label="Grading progress" value={`${writtenAnswers.length - remaining} / ${writtenAnswers.length}`} /></div>
+      <div className="mt-5 grid gap-3 sm:grid-cols-4"><Metric label="Current score" value={`${currentScore} / ${maximumScore} pts`} /><Metric label="Percentage" value={maximumScore ? `${Math.round(currentScore / maximumScore * 1000) / 10}%` : '—'} /><Metric label="Score breakdown" value={`${submission.auto_score || 0} auto + ${submission.manual_score || 0} manual`} /><Metric label="Grading progress" value={`${writtenAnswers.length - remaining} / ${writtenAnswers.length}`} /></div>
     </header>
     {error && <Alert className="mb-4">{error}</Alert>}
     {notice && <Alert variant="success" className="mb-4">{notice}</Alert>}
@@ -141,11 +141,22 @@ const SubmissionReview = () => {
           </div>
           {written ? <label className="flex shrink-0 items-center gap-2 whitespace-nowrap font-semibold">
             <span className="sr-only">Score for question {answer.question?.question_order}</span>
-            <input type="number" min="0" max={answer.question?.points || 0} value={draft.score} disabled={actionLoading || submission.status === 'RELEASED'} onChange={(event) => setDraft(answer.id, 'score', event.target.value)} className="w-20 rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-            <span>/ {answer.question?.points || 0}</span>
+            <input
+              type="number"
+              min="0"
+              max={answer.question?.points || 0}
+              value={draft.score}
+              disabled={actionLoading || submission.status === 'RELEASED'}
+              onChange={(event) => {
+                const value = event.target.value;
+                setDraft(answer.id, 'score', value === '' ? '' : String(Math.min(answer.question?.points || 0, Math.max(0, Number(value)))));
+              }}
+              className="w-16 rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            />
+            <span>/ {answer.question?.points || 0} pts</span>
           </label> : <div className="flex shrink-0 items-center gap-2 whitespace-nowrap font-semibold">
             {answer.is_correct ? <CheckCircle2 className="text-emerald-600" size={19} /> : <XCircle className="text-red-600" size={19} />}
-            {answer.points_awarded || 0} / {answer.question?.points || 0}
+            {answer.points_awarded || 0} / {answer.question?.points || 0} pts
           </div>}
         </div>
         <div className="mt-4 whitespace-pre-wrap rounded-lg bg-slate-50 p-4 text-sm text-slate-700">{answer.student_answer || <span className="text-slate-400">No answer submitted</span>}</div>
