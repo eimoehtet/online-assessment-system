@@ -62,7 +62,7 @@ const ChangePasswordForm = () => {
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               onClick={() => setShowCurrentPassword(!showCurrentPassword)}
             >
-              {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              {showCurrentPassword ? <Eye size={18} /> : <EyeOff size={18} />}
             </button>
           </div>
         </div>
@@ -82,7 +82,7 @@ const ChangePasswordForm = () => {
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               onClick={() => setShowNewPassword(!showNewPassword)}
             >
-              {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              {showNewPassword ? <Eye size={18} /> : <EyeOff size={18} />}
             </button>
           </div>
         </div>
@@ -102,7 +102,7 @@ const ChangePasswordForm = () => {
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
             >
-              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              {showConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} />}
             </button>
           </div>
         </div>
