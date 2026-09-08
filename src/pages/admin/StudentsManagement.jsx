@@ -90,8 +90,10 @@ const StudentsManagement = () => {
     try {
       if (showModal[1]) {
         await apiRoutes.updateUser(showModal[1].id, formData);
+        showAlert('Student updated successfully.', { variant: 'success' });
       } else {
         await apiRoutes.createUser(formData);
+        showAlert('Student created successfully.', { variant: 'success' });
       }
       setShowModal([false, null]);
       fetchStudents();
@@ -105,6 +107,7 @@ const StudentsManagement = () => {
     if (await confirmAlert('Are you sure you want to delete this user?')) {
       try {
         await apiRoutes.deleteUser(id);
+        showAlert('Student deleted successfully.', { variant: 'success' });
         fetchStudents();
       } catch {
         showAlert('Failed to delete user', { variant: 'error' });
@@ -115,6 +118,7 @@ const StudentsManagement = () => {
   const handleToggleStatus = async (id) => {
     try {
       await apiRoutes.toggleUserStatus(id);
+      showAlert('Student status updated successfully.', { variant: 'success' });
       fetchStudents();
     } catch {
       showAlert('Failed to toggle user status', { variant: 'error' });
@@ -277,6 +281,7 @@ const StudentsManagement = () => {
               e.preventDefault();
               try {
                 await apiRoutes.resetPassword(showResetPasswordModal[1].id, formData.password);
+                showAlert('Student password reset successfully.', { variant: 'success' });
                 setShowResetPasswordModal([false, null]);
                 setFormData(initialFormData);
               } catch (err) {

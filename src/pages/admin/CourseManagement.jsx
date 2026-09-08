@@ -79,8 +79,10 @@ const CourseManagement = () => {
 
       if (editingCourse) {
         await apiRoutes.updateCourse(editingCourse.id, data);
+        showAlert('Course updated successfully.', { variant: 'success' });
       } else {
         await apiRoutes.createCourse(data);
+        showAlert('Course created successfully.', { variant: 'success' });
       }
       
       setShowModal(false);
@@ -94,6 +96,7 @@ const CourseManagement = () => {
     if (await confirmAlert('Are you sure you want to delete this course?')) {
       try {
         await apiRoutes.deleteCourse(id);
+        showAlert('Course deleted successfully.', { variant: 'success' });
         fetchData();
       } catch {
         showAlert('Failed to delete course', { variant: 'error' });
@@ -104,6 +107,7 @@ const CourseManagement = () => {
   const handleToggleStatus = async (id) => {
     try {
       await apiRoutes.toggleCourseStatus(id);
+      showAlert('Course status updated successfully.', { variant: 'success' });
       fetchData();
     } catch {
       showAlert('Failed to toggle course status', { variant: 'error' });

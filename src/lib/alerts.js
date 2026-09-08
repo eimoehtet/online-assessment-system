@@ -1,6 +1,7 @@
 let items = [];
 let nextId = 0;
 const listeners = new Set();
+const dismissTimers = new Map();
 const emit = () => listeners.forEach((listener) => listener());
 
 export const subscribeAlerts = (listener) => {
@@ -10,6 +11,8 @@ export const subscribeAlerts = (listener) => {
 export const getAlerts = () => items;
 
 export function dismissAlert(id) {
+  clearTimeout(dismissTimers.get(id));
+  dismissTimers.delete(id);
   items = items.filter((item) => item.id !== id);
   emit();
 }
@@ -17,6 +20,7 @@ export function dismissAlert(id) {
 export function showAlert(message, { variant = 'info', title } = {}) {
   const id = ++nextId;
   items = [...items, { id, message, variant, title }];
+  dismissTimers.set(id, setTimeout(() => dismissAlert(id), 5000));
   emit();
   return id;
 }

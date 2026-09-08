@@ -147,13 +147,18 @@ const EnrollmentDetail = () => {
 
   const removeEnrollment = async (id, studentName) => {
     if (!await confirmAlert(`Are you sure you want to remove ${studentName} from this course? `)) return;
-    try { await apiRoutes.deleteEnrollment(id); await fetchEnrollment(currentPage); }
+    try {
+      await apiRoutes.deleteEnrollment(id);
+      showAlert('Student removed from the course successfully.', { variant: 'success' });
+      await fetchEnrollment(currentPage);
+    }
     catch (err) { setError(err.response?.data?.message || 'Failed to remove enrollment.'); }
   };
 
   const changeEnrollmentShift = async (enroll, shift) => {
     try {
       await apiRoutes.updateEnrollment(enroll.id, { course_id: enroll.course_id, student_id: enroll.student_id, shift });
+      showAlert('Enrollment shift updated successfully.', { variant: 'success' });
       await fetchEnrollment(currentPage);
     } catch (err) { setError(err.response?.data?.message || 'Failed to update enrollment shift.'); }
   };
