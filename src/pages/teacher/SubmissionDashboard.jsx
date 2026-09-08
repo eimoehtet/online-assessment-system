@@ -1,5 +1,6 @@
 import Alert from '../../components/ui/Alert';
-import { useCallback, useEffect, useState } from 'react';
+import { confirmAlert } from '../../lib/alerts';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertTriangle, CheckCircle2, ChevronDown, Clock, Search, ShieldAlert, User } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -15,41 +16,71 @@ const SubmissionDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
+  const initialParams = useRef(new URLSearchParams(params));
+  const [filtersReady, setFiltersReady] = useState(false);
   const [submissions, setSubmissions] = useState([]);
   const [summary, setSummary] = useState({});
   const [meta, setMeta] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
   const [courses, setCourses] = useState([]);
   const [quizzes, setQuizzes] = useState([]);
   const [insights, setInsights] = useState(null);
+  const [releaseRevision, setReleaseRevision] = useState(0);
   const [searchInput, setSearchInput] = useState(params.get('search') || '');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [releasing, setReleasing] = useState(false);
+  const [notice, setNotice] = useState('');
   const value = (key, fallback = '') => params.get(key) || fallback;
   const workflow = value('workflow', 'NEEDS_GRADING');
   const page = Number(value('page', '1'));
 
   const updateParams = (changes) => {
-    const next = new URLSearchParams(params);
-    Object.entries(changes).forEach(([key, nextValue]) => nextValue ? next.set(key, nextValue) : next.delete(key));
-    if (!Object.prototype.hasOwnProperty.call(changes, 'page')) next.delete('page');
-    setParams(next);
+    setParams((current) => {
+      const next = new URLSearchParams(current);
+      Object.entries(changes).forEach(([key, nextValue]) => nextValue ? next.set(key, nextValue) : next.delete(key));
+      if (!Object.prototype.hasOwnProperty.call(changes, 'page')) next.delete('page');
+      return next;
+    });
   };
 
   useEffect(() => {
+    if (!filtersReady || searchInput.trim() === (params.get('search') || '')) return;
     const timer = window.setTimeout(() => updateParams({ search: searchInput.trim() }), 300);
     return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchInput]);
+  }, [searchInput, filtersReady]);
 
   useEffect(() => {
     let active = true;
-    Promise.all([apiRoutes.getCourseByTeacherId(user.id, { limit: 100 }), apiRoutes.getQuizzesByTeacherId(user.id)])
+    const loadQuizzes = async () => {
+      const first = await apiRoutes.getQuizzesByTeacherId(user.id, { limit: 100 });
+      const remaining = await Promise.all(Array.from({ length: Math.max(0, (first.data.meta?.totalPages || 1) - 1) }, (_, index) => apiRoutes.getQuizzesByTeacherId(user.id, { limit: 100, page: index + 2 })));
+      return [first, ...remaining].flatMap((response) => response.data.data || []);
+    };
+    Promise.all([apiRoutes.getCourseByTeacherId(user.id, { limit: 100 }), loadQuizzes()])
       .then(([courseRes, quizRes]) => {
         if (!active) return;
         setCourses(courseRes.data.data || courseRes.data.courses || []);
-        setQuizzes(quizRes.data.data || []);
-      }).catch(() => {});
+        setQuizzes(quizRes);
+        setParams((current) => {
+          const next = new URLSearchParams(current);
+          if (!next.get('workflow')) next.set('workflow', 'NEEDS_GRADING');
+          if (!initialParams.current.has('quiz_id') && !initialParams.current.has('course_id') && !next.has('quiz_id') && !next.has('course_id')) {
+            // Quiz IDs increase on creation; the schema has no creation timestamp.
+            const latest = quizRes.reduce((result, quiz) => !result || quiz.id > result.id ? quiz : result, null);
+            if (latest) {
+              next.set('quiz_id', String(latest.id));
+              next.set('course_id', String(latest.course?.id || latest.course_id));
+              next.delete('page');
+            }
+          }
+          return next;
+        }, { replace: true });
+        setFiltersReady(true);
+      }).catch(() => { if (active) setFiltersReady(true); });
     return () => { active = false; };
+    // Initialize defaults once per teacher; later filter changes are user choices.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id]);
 
   useEffect(() => {
@@ -63,30 +94,58 @@ const SubmissionDashboard = () => {
       .then((response) => { if (active) setInsights(response.data); })
       .catch(() => { if (active) setInsights(null); });
     return () => { active = false; };
-  }, [params]);
+  }, [params, releaseRevision]);
 
   const fetchSubmissions = useCallback(async () => {
+    if (!filtersReady) return;
     setLoading(true);
     setError('');
     try {
-      const response = await apiRoutes.getSubmissions(Object.fromEntries(params.entries()));
+      const response = await apiRoutes.getSubmissions({ ...Object.fromEntries(params.entries()), workflow });
       setSubmissions(response.data.data || []);
       setMeta(response.data.meta);
       setSummary(response.data.summary || {});
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load submissions.');
     } finally { setLoading(false); }
-  }, [params]);
+  }, [params, workflow, filtersReady]);
 
   useEffect(() => {
     const timer = window.setTimeout(fetchSubmissions, 0);
     return () => window.clearTimeout(timer);
   }, [fetchSubmissions]);
 
+  const canReleaseQuiz = String(insights?.quiz?.id) === params.get('quiz_id') && insights?.ready_to_release > 0;
+
+  const releaseScores = async (submission = null) => {
+    if (releasing) return;
+    const quizId = params.get('quiz_id');
+    if (!submission && (!quizId || !canReleaseQuiz)) return;
+    const quizTitle = quizzes.find((quiz) => String(quiz.id) === quizId)?.title || 'this quiz';
+    const message = submission
+      ? `Are you sure you want to release the score for ${submission.student?.name}? `
+      : `Are you sure you want to release all graded scores for "${quizTitle}" ? `;
+    if (!await confirmAlert(message)) return;
+    setReleasing(true);
+    setError('');
+    setNotice('');
+    try {
+      const response = submission
+        ? await apiRoutes.releaseSubmissionScore(submission.id)
+        : await apiRoutes.releaseQuizScores(quizId);
+      setNotice(submission ? 'Score released.' : `${response.data.released_count} graded scores released.`);
+      setInsights(null);
+      setReleaseRevision((revision) => revision + 1);
+      await fetchSubmissions();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to release scores.');
+    } finally { setReleasing(false); }
+  };
+
   const filteredQuizzes = value('course_id') ? quizzes.filter((quiz) => String(quiz.course?.id || quiz.course_id) === value('course_id')) : quizzes;
   const hasFilters = ['search', 'course_id', 'quiz_id', 'risk_level', 'submitted_from', 'submitted_to'].some((key) => params.has(key));
   const openSubmission = (id) => navigate(`/teacher/submissions/${id}?${params.toString()}`);
-  const applyWorkflow = (next) => updateParams({ workflow: next === 'ALL' ? '' : next });
+  const applyWorkflow = (next) => updateParams({ workflow: next });
 
   return <div className="mx-auto max-w-7xl">
     <div className="mb-7"><h1 className="text-3xl font-bold tracking-tight text-slate-950">Submission Review</h1><p className="mt-2 text-slate-600">Grade student work, release results, and review integrity signals.</p></div>
@@ -96,7 +155,7 @@ const SubmissionDashboard = () => {
         ['READY_TO_RELEASE', 'Ready to release', summary.ready_to_release, Clock, 'text-blue-700'],
         ['RELEASED', 'Released', summary.released, CheckCircle2, 'text-emerald-600'],
         ['HIGH_RISK', 'High integrity signal', summary.high_risk, ShieldAlert, 'text-red-600'],
-      ].map(([key, label, count, Icon, color]) => <button key={key} onClick={() => key === 'HIGH_RISK' ? updateParams({ risk_level: 'HIGH', workflow: '' }) : applyWorkflow(key)} className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-blue-300"><Icon className={color} size={24} /><span><span className="block text-2xl font-bold text-slate-950">{count || 0}</span><span className="text-xs text-slate-500">{label}</span></span></button>)}
+      ].map(([key, label, count, Icon, color]) => <button key={key} onClick={() => key === 'HIGH_RISK' ? updateParams({ risk_level: 'HIGH', workflow: 'ALL' }) : applyWorkflow(key)} className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-blue-300"><Icon className={color} size={24} /><span><span className="block text-2xl font-bold text-slate-950">{count || 0}</span><span className="text-xs text-slate-500">{label}</span></span></button>)}
     </div>
     <div className="mb-4 flex gap-2 overflow-x-auto pb-1" aria-label="Submission workflow">{workflows.map(([key, label]) => <button key={key} onClick={() => applyWorkflow(key)} className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold ${workflow === key ? 'bg-red-600 text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'}`}>{label}</button>)}</div>
     <div className="mb-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -111,12 +170,17 @@ const SubmissionDashboard = () => {
       </div>
       {hasFilters && <button onClick={() => { setSearchInput(''); setParams(new URLSearchParams({ workflow })); }} className="mt-3 text-sm font-semibold text-blue-700 hover:underline">Clear filters</button>}
     </div>
+    <div className="mb-4 flex flex-wrap items-center gap-3">
+      <button disabled={!canReleaseQuiz || releasing || loading} onClick={() => releaseScores()} className="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40">{releasing ? 'Releasing…' : 'Release all graded scores'}</button>
+      <span className="text-sm text-slate-500">{value('quiz_id') ? 'Releases all graded submissions for the selected quiz.' : 'Select a quiz to release its graded scores together.'}</span>
+    </div>
+    {notice && <Alert variant="success" className="mb-4">{notice}</Alert>}
     {error && <Alert className="mb-4"><div className="flex items-center justify-between gap-3"><span>{error}</span><button onClick={fetchSubmissions} className="underline">Retry</button></div></Alert>}
     {insights && <QuizInsights insights={insights} />}
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       {loading ? <LoadingIndicator label="Loading submissions…" /> : submissions.length === 0 ? <div className="p-12 text-center"><p className="font-semibold text-slate-800">{workflow === 'NEEDS_GRADING' ? 'Nothing needs grading' : hasFilters ? 'No submissions match these filters' : 'No submissions yet'}</p><p className="mt-1 text-sm text-slate-500">{hasFilters ? 'Try clearing or changing the current filters.' : 'Student attempts will appear here.'}</p></div> : <>
-        <div className="hidden overflow-x-auto md:block"><SubmissionTable submissions={submissions} openSubmission={openSubmission} /></div>
-        <div className="divide-y divide-slate-200 md:hidden">{submissions.map((submission) => <SubmissionCard key={submission.id} submission={submission} onOpen={() => openSubmission(submission.id)} />)}</div>
+        <div className="hidden overflow-x-auto md:block"><SubmissionTable submissions={submissions} openSubmission={openSubmission} onRelease={releaseScores} releasing={releasing} /></div>
+        <div className="divide-y divide-slate-200 md:hidden">{submissions.map((submission) => <div key={submission.id}><SubmissionCard submission={submission} onOpen={() => openSubmission(submission.id)} />{submission.status === 'GRADED' && <button disabled={releasing} onClick={() => releaseScores(submission)} className="mx-4 mb-4 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40">Release</button>}</div>)}</div>
         <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-200 p-4 sm:flex-row"><p className="text-sm text-slate-500">Showing {(meta.page - 1) * meta.limit + 1}–{Math.min(meta.page * meta.limit, meta.total)} of {meta.total}</p><div className="flex gap-2"><button disabled={page <= 1} onClick={() => updateParams({ page: String(page - 1) })} className="rounded-lg border px-3 py-2 text-sm disabled:opacity-40">Previous</button><button disabled={page >= meta.totalPages} onClick={() => updateParams({ page: String(page + 1) })} className="rounded-lg border px-3 py-2 text-sm disabled:opacity-40">Next</button></div></div>
       </>}
     </div>
@@ -127,9 +191,9 @@ const Select = ({ label, value, onChange, children }) => <label className="relat
 const Score = ({ submission }) => <div><div className="font-semibold text-slate-950">{submission.current_score} / {submission.quiz?.maximum_score || 0}{submission.percentage !== null ? ` (${submission.percentage}%)` : ''}</div><div className="text-xs text-slate-500">{submission.status === 'RELEASED' ? 'Released' : 'Not released'}{submission.manual_grading?.remaining ? ` · ${submission.manual_grading.remaining} to grade` : ''}</div></div>;
 const Integrity = ({ submission }) => { const risk = submission.behaviorSummary || { risk_level: 'LOW', suspicious_events: 0 }; return <div><span title="Integrity signals require teacher review; they are not proof of misconduct." className={`rounded-full px-2.5 py-1 text-xs font-semibold ${riskStyles[risk.risk_level]}`}>{risk.risk_level}</span><div className="mt-1 text-xs text-slate-500">{risk.suspicious_events} suspicious events</div></div>; };
 const submittedDate = (submission) => new Date(submission.completed_at || submission.submitted_at);
-const SubmissionTable = ({ submissions, openSubmission }) => <table className="min-w-full divide-y divide-slate-200 text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-4 py-3">Student</th><th className="px-4 py-3">Quiz</th><th className="px-4 py-3">Submitted</th><th className="px-4 py-3">Score</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Integrity signal</th><th className="px-4 py-3 text-right">Action</th></tr></thead><tbody className="divide-y divide-slate-100">{submissions.map((submission) => <tr key={submission.id} className="cursor-pointer hover:bg-slate-50" onClick={() => openSubmission(submission.id)}><td className="px-4 py-4"><div className="flex items-center gap-3"><span className="flex size-9 items-center justify-center rounded-lg bg-red-50 text-blue-700"><User size={16} /></span><div><div className="font-medium text-slate-950">{submission.student?.name}</div><div className="text-xs text-slate-500">{submission.student?.student_id || submission.student?.email}</div></div></div></td><td className="px-4 py-4"><div className="font-medium text-slate-700">{submission.quiz?.title}</div><div className="text-xs text-slate-500">{submission.quiz?.course?.code}</div></td><td className="px-4 py-4 text-slate-600" title={format(submittedDate(submission), 'PPP pp')}>{formatDistanceToNow(submittedDate(submission), { addSuffix: true })}</td><td className="px-4 py-4"><Score submission={submission} /></td><td className="px-4 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[submission.status]}`}>{submission.status.replaceAll('_', ' ')}</span></td><td className="px-4 py-4"><Integrity submission={submission} /></td><td className="px-4 py-4 text-right"><button onClick={(event) => { event.stopPropagation(); openSubmission(submission.id); }} className="rounded-lg bg-slate-100 px-3 py-2 font-semibold hover:bg-slate-200">{submission.status === 'IN_REVIEW' ? 'Continue' : 'Review'}</button></td></tr>)}</tbody></table>;
+const SubmissionTable = ({ submissions, openSubmission, onRelease, releasing }) => <table className="min-w-full divide-y divide-slate-200 text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-4 py-3">Student</th><th className="px-4 py-3">Quiz</th><th className="px-4 py-3">Submitted</th><th className="px-4 py-3">Score</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Integrity signal</th><th className="px-4 py-3 text-right">Action</th></tr></thead><tbody className="divide-y divide-slate-100">{submissions.map((submission) => <tr key={submission.id} className="cursor-pointer hover:bg-slate-50" onClick={() => openSubmission(submission.id)}><td className="px-4 py-4"><div className="flex items-center gap-3"><span className="flex size-9 items-center justify-center rounded-lg bg-red-50 text-blue-700"><User size={16} /></span><div><div className="font-medium text-slate-950">{submission.student?.name}</div><div className="text-xs text-slate-500">{submission.student?.student_id || submission.student?.email}</div></div></div></td><td className="px-4 py-4"><div className="font-medium text-slate-700">{submission.quiz?.title}</div><div className="text-xs text-slate-500">{submission.quiz?.course?.code}</div></td><td className="px-4 py-4 text-slate-600" title={format(submittedDate(submission), 'PPP pp')}>{formatDistanceToNow(submittedDate(submission), { addSuffix: true })}</td><td className="px-4 py-4"><Score submission={submission} /></td><td className="px-4 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[submission.status]}`}>{submission.status.replaceAll('_', ' ')}</span></td><td className="px-4 py-4"><Integrity submission={submission} /></td><td className="px-4 py-4 text-right"><button disabled={releasing} onClick={(event) => { event.stopPropagation(); if (submission.status === 'GRADED') onRelease(submission); else openSubmission(submission.id); }} className="rounded-lg bg-slate-100 px-3 py-2 font-semibold hover:bg-slate-200">{submission.status === 'GRADED' ? 'Release' : submission.status === 'IN_REVIEW' ? 'Continue' : 'Review'}</button></td></tr>)}</tbody></table>;
 const SubmissionCard = ({ submission, onOpen }) => <button onClick={onOpen} className="block w-full p-4 text-left"><div className="flex items-start justify-between gap-3"><div><div className="font-semibold text-slate-950">{submission.student?.name}</div><div className="text-xs text-slate-500">{submission.student?.student_id || submission.student?.email}</div></div><span className={`rounded-full px-2 py-1 text-xs font-semibold ${statusStyles[submission.status]}`}>{submission.status.replaceAll('_', ' ')}</span></div><div className="mt-3 text-sm font-medium text-slate-700">{submission.quiz?.title} · {submission.quiz?.course?.code}</div><div className="mt-3 flex items-end justify-between gap-3"><Score submission={submission} /><Integrity submission={submission} /></div></button>;
 
-const QuizInsights = ({ insights }) => <details className="mb-5 rounded-xl border border-blue-200 bg-blue-50/40 p-4" open><summary className="cursor-pointer font-semibold text-slate-950">Quiz insights: {insights.quiz.title}</summary><div className="mt-4 grid gap-3 sm:grid-cols-3 xl:grid-cols-6">{[['Completion', `${insights.participation.completion_rate}%`], ['Students attempted', insights.participation.unique_students], ['No attempt', insights.participation.no_attempt], ['Total attempts', insights.participation.total_attempts], ['Average score', insights.scores.average ?? '—'], ['Awaiting grading', insights.awaiting_grading]].map(([label, metric]) => <div key={label} className="rounded-lg bg-white p-3"><div className="text-xl font-bold text-slate-950">{metric}</div><div className="text-xs text-slate-500">{label}</div></div>)}</div><div className="mt-4 overflow-x-auto"><table className="min-w-full text-left text-sm"><thead className="text-xs uppercase text-slate-500"><tr><th className="p-2">Question</th><th className="p-2">Answered</th><th className="p-2">Correct rate</th><th className="p-2">Average points</th><th className="p-2">Awaiting grading</th></tr></thead><tbody>{insights.questions.map((question) => <tr key={question.id} className="border-t border-blue-100"><td className="p-2 font-medium text-slate-800">{question.question_order}. {question.question_text.length > 70 ? `${question.question_text.slice(0, 70)}…` : question.question_text}</td><td className="p-2">{question.answered}</td><td className="p-2">{question.correct_rate === null ? 'Manual' : `${question.correct_rate}%`}</td><td className="p-2">{question.average_points ?? '—'} / {question.points || 0}</td><td className="p-2">{question.awaiting_grading}</td></tr>)}</tbody></table></div></details>;
+const QuizInsights = ({ insights }) => <details className="mb-5 rounded-xl border border-blue-200 bg-blue-50/40 p-4"><summary className="cursor-pointer font-semibold text-slate-950">Quiz overview insights: {insights.quiz.title}</summary><div className="mt-4 grid gap-3 sm:grid-cols-3 xl:grid-cols-6">{[['Completion', `${insights.participation.completion_rate}%`], ['Students attempted', insights.participation.unique_students], ['No attempt', insights.participation.no_attempt], ['Total attempts', insights.participation.total_attempts], ['Average score', insights.scores.average ?? '—'], ['Awaiting grading', insights.awaiting_grading]].map(([label, metric]) => <div key={label} className="rounded-lg bg-white p-3"><div className="text-xl font-bold text-slate-950">{metric}</div><div className="text-xs text-slate-500">{label}</div></div>)}</div><div className="mt-4 overflow-x-auto"><table className="min-w-full text-left text-sm"><thead className="text-xs uppercase text-slate-500"><tr><th className="p-2">Question</th><th className="p-2">Answered</th><th className="p-2">Correct rate</th><th className="p-2">Average points</th><th className="p-2">Awaiting grading</th></tr></thead><tbody>{insights.questions.map((question) => <tr key={question.id} className="border-t border-blue-100"><td className="p-2 font-medium text-slate-800">{question.question_order}. {question.question_text.length > 70 ? `${question.question_text.slice(0, 70)}…` : question.question_text}</td><td className="p-2">{question.answered}</td><td className="p-2">{question.correct_rate === null ? 'Manual' : `${question.correct_rate}%`}</td><td className="p-2">{question.average_points ?? '—'} / {question.points || 0}</td><td className="p-2">{question.awaiting_grading}</td></tr>)}</tbody></table></div></details>;
 
 export default SubmissionDashboard;

@@ -19,8 +19,8 @@ function Confirmation({ item }) {
   };
   return <dialog ref={dialog} aria-labelledby="confirmation-title" aria-describedby="confirmation-message" onCancel={(event) => { event.preventDefault(); finish(false); }} className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl bg-white p-6 shadow-xl backdrop:bg-slate-950/40">
     <h2 id="confirmation-title" className="mb-4 text-lg font-semibold text-slate-950">Please confirm</h2>
-    <Alert variant="warning"><span id="confirmation-message">{item.message}</span></Alert>
-    <div className="mt-5 flex justify-end gap-3">
+    <span id="confirmation-message" className='text-sm'>{item.message}</span>
+    <div className="mt-4 flex justify-end gap-3">
       <button autoFocus type="button" onClick={() => finish(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold">Cancel</button>
       <button type="button" onClick={() => finish(true)} className="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white">Confirm</button>
     </div>

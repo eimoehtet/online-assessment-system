@@ -37,7 +37,7 @@ export const apiRoutes = {
   // Quizzes
   getQuizzes: (params) => apiClient.get("/quizzes", { params }),
   getQuizById: (id) => apiClient.get(`/quizzes/${id}`),
-  getQuizzesByTeacherId: (teacherId) => apiClient.get(`/quizzes/teacher/${teacherId}`),
+  getQuizzesByTeacherId: (teacherId, params) => apiClient.get(`/quizzes/teacher/${teacherId}`, { params }),
   createQuiz: (quizData) => apiClient.post("/quizzes", quizData),
   updateQuiz: (id, quizData) => apiClient.put(`/quizzes/${id}`, quizData),
   deleteQuiz: (id) => apiClient.delete(`/quizzes/${id}`),
@@ -74,6 +74,7 @@ export const apiRoutes = {
   gradeSubmissionAnswer: (submissionId, answerId, gradeData) => apiClient.patch(`/submissions/${submissionId}/answers/${answerId}/grade`, gradeData),
   completeSubmissionReview: (submissionId, data = {}) => apiClient.post(`/submissions/${submissionId}/complete-review`, data),
   releaseSubmissionScore: (submissionId) => apiClient.post(`/submissions/${submissionId}/release`),
+  releaseQuizScores: (quizId) => apiClient.post(`/submissions/quiz/${quizId}/release`),
   recordBehavior: (submissionId, behaviorData) => apiClient.post(`/submissions/${submissionId}/behavior-logs`, behaviorData),
   getBehaviorSummary: (submissionId) => apiClient.get(`/submissions/${submissionId}/behavior-summary`),
   getBehaviorLogs: (submissionId, params) => apiClient.get(`/submissions/${submissionId}/behavior-logs`, { params }),

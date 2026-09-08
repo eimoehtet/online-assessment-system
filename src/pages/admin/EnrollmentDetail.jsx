@@ -146,7 +146,7 @@ const EnrollmentDetail = () => {
   const filteredEnrollments = enrollment;
 
   const removeEnrollment = async (id, studentName) => {
-    if (!await confirmAlert(`Remove ${studentName} from this course? Their quiz history will remain available.`)) return;
+    if (!await confirmAlert(`Are you sure you want to remove ${studentName} from this course? `)) return;
     try { await apiRoutes.deleteEnrollment(id); await fetchEnrollment(currentPage); }
     catch (err) { setError(err.response?.data?.message || 'Failed to remove enrollment.'); }
   };
@@ -179,7 +179,7 @@ const EnrollmentDetail = () => {
   return (
     <div>
       <Link to="/admin/courses" className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-blue-700 hover:underline"><ChevronLeft size={17} /> Courses</Link>
-      <div className="mb-6"><h1 className="text-3xl font-bold text-slate-950">{course?.name || 'Course Roster'}</h1><p className="mt-1 text-sm text-slate-500">{course?.code} · {course?.teacher?.name} · Manage enrolled students</p></div>
+      <div className="mb-6"><h1 className="text-3xl font-bold text-slate-950">{course?.name || 'Course Roster'}</h1><p className="mt-1 text-sm text-slate-500">{course?.code} · {course?.teacher?.name} </p></div>
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center space-x-4">
           <input
@@ -234,12 +234,9 @@ const EnrollmentDetail = () => {
               <th className="px-4 py-3">No</th>
               <th className="px-4 py-3">Student ID</th>
               <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">D.O.B</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Shift</th>
-              <th className="px-4 py-3">Gender</th>
               <th className="px-4 py-3">Phone</th>
-              <th className="px-4 py-3">Address</th>
               <th className="px-4 py-3">Action</th>
             </tr>
           </thead>
@@ -257,26 +254,13 @@ const EnrollmentDetail = () => {
                   {enroll.student.name}
                 </td>
                 <td className="whitespace-nowrap px-4 py-4">
-                  {enroll.student.date_of_birth
-                    ? new Date(
-                        enroll.student.date_of_birth,
-                      ).toLocaleDateString()
-                    : ""}
-                </td>
-                <td className="whitespace-nowrap px-4 py-4">
                   {enroll.student.email}
                 </td>
                 <td className="whitespace-nowrap px-4 py-4">
                   <select aria-label={`Shift for ${enroll.student.name}`} value={enroll.shift} onChange={(event) => changeEnrollmentShift(enroll, event.target.value)} className="rounded border border-slate-300 bg-white px-2 py-1"><option value="MORNING">Morning</option><option value="AFTERNOON">Afternoon</option><option value="EVENING">Evening</option></select>
                 </td>
                 <td className="whitespace-nowrap px-4 py-4">
-                  {enroll.student.gender}
-                </td>
-                <td className="whitespace-nowrap px-4 py-4">
                   {enroll.student.phone_number}
-                </td>
-                <td className="whitespace-nowrap px-4 py-4">
-                  {enroll.student.address}
                 </td>
                 <td className="px-4 py-4"><button onClick={() => removeEnrollment(enroll.id, enroll.student.name)} className="text-sm font-semibold text-red-600 hover:underline">Remove</button></td>
               </tr>
