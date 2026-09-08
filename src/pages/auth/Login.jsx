@@ -80,7 +80,7 @@ const Login = () => {
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               onClick={() => setShowPassword(!showPassword)}
             >
-              {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
             </div>
           </div>
