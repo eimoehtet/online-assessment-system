@@ -328,12 +328,12 @@ const QuizTake = () => {
             )}
 
             {question.question_type === 'SHORT_Q' && (
-              <input
+              <textarea
                 type="text"
                 value={answers[question.id] || ''}
                 onChange={(e) => handleAnswerChange(question.id, e.target.value)}
                 placeholder="Type your answer here..."
-                className="w-full min-h-12 rounded-lg border border-slate-300 px-4 py-3 text-lg outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                className="w-full min-h-24 rounded-lg border border-slate-300 px-4 py-3 text-lg outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
               />
             )}
 
