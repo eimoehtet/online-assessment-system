@@ -13,6 +13,7 @@ const StudentsManagement = () => {
   const [showModal, setShowModal] = useState([false, null]);
   const [showResetPasswordModal, setShowResetPasswordModal] = useState([false, null]);
   const [showPassword, setShowPassword] = useState(false);
+  const [updatingStatusIds, setUpdatingStatusIds] = useState([]);
   const initialFormData = {
     name: '',
     email: '',
@@ -20,10 +21,8 @@ const StudentsManagement = () => {
     role: 'STUDENT',
     gender: null,
     student_id: '',
-    phone_number: '',
-    date_of_birth: '',
-    address: '',
-    status: 1, // Default to active
+    major: '',
+    status: 1, 
 
   };
   const [formData, setFormData] = useState(initialFormData);
@@ -56,11 +55,9 @@ const StudentsManagement = () => {
   useEffect(() => {
     const timer = setTimeout(() => { setCurrentPage(1); fetchStudents(1); }, 300);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nameSearch]);
 
   useEffect(() => {
-    /* eslint-disable react-hooks/set-state-in-effect */
     if (showModal[0] && showModal[1]) {
       setFormData({
         name: showModal[1].name,
@@ -68,16 +65,12 @@ const StudentsManagement = () => {
         role: showModal[1].role,
         gender: showModal[1].gender || null,
         student_id: showModal[1].student_id || '',
-        phone_number: showModal[1].phone_number || '',
-        date_of_birth: showModal[1].date_of_birth ? showModal[1].date_of_birth.split('T')[0] : '',
-        address: showModal[1].address || '',
+        major: showModal[1].major || '',
         status: showModal[1].status ?? 1,
       });
     } else {
       setFormData(initialFormData);
     }
-    /* eslint-enable react-hooks/set-state-in-effect */
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showModal]);
 
   const handleInputChange = (e) => {
@@ -116,13 +109,17 @@ const StudentsManagement = () => {
   };
 
   const handleToggleStatus = async (id) => {
+    if (updatingStatusIds.includes(id)) return;
+    setUpdatingStatusIds((ids) => [...ids, id]);
     try {
       await apiRoutes.toggleUserStatus(id);
       showAlert('Student status updated successfully.', { variant: 'success' });
-      fetchStudents();
+      await fetchStudents(currentPage);
     } catch {
       showAlert('Failed to toggle user status', { variant: 'error' });
-    };
+    } finally {
+      setUpdatingStatusIds((ids) => ids.filter((studentId) => studentId !== id));
+    }
   };
 
     const filteredStudents = students;
@@ -154,12 +151,12 @@ const StudentsManagement = () => {
           <thead>
             <tr className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
               <th className="px-4 py-3">No</th>
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3">Role</th>
               <th className="px-4 py-3">Student ID</th>
+              <th className="px-4 py-3">Name</th>
+              <th className="px-4 py-3">Gender</th>
+              <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Courses</th>
+              <th className="px-4 py-3">Major</th>
               <th className="px-4 py-3">Actions</th>
             </tr>
           </thead>
@@ -167,22 +164,12 @@ const StudentsManagement = () => {
             {loading ? <TableLoadingRow colSpan={8} label="Loading students…" /> : filteredStudents.map((student, index) => (
               <tr key={student.id} className="hover:bg-slate-50">
                 <td className="whitespace-nowrap px-4 py-4 text-slate-600">{(currentPage - 1) * 10 + index + 1}</td>
+                <td className="whitespace-nowrap px-4 py-4 font-medium text-slate-950">{student.student_id}</td>
                 <td className="whitespace-nowrap px-4 py-4 font-medium text-slate-950">{student.name}</td>
+                <td className="whitespace-nowrap px-4 py-4 text-slate-600">{student.gender}</td>
                 <td className="whitespace-nowrap px-4 py-4 text-slate-600">{student.email}</td>
-                <td className="whitespace-nowrap px-4 py-4">
-                  <span className={`rounded-md px-2 py-1 text-xs font-bold ${
-                    student.role === 'ADMIN'
-                      ? 'bg-emerald-50 text-emerald-700'
-                      : student.role === 'TEACHER'
-                        ? 'bg-red-50 text-blue-700'
-                        : 'bg-amber-50 text-amber-700'
-                  }`}>
-                    {student.role}
-                  </span>
-                </td>
-                <td className="whitespace-nowrap px-4 py-4 text-slate-600">{student.student_id || '-'}</td>
                 <td className="px-4 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${student.status === 1 ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>{student.status === 1 ? 'Active' : 'Inactive'}</span></td>
-                <td className="px-4 py-4 text-slate-600">{student._count?.enrollments || 0}</td>
+                <td className="whitespace-nowrap px-4 py-4">{student.major}</td>
                 <td className="whitespace-nowrap px-4 py-4">
                   <div className="flex gap-2">
                     <button onClick={() => setShowModal([true, student])} className="rounded-lg p-2 text-yellow-600 transition hover:bg-yellow-50 cursor-pointer" title="Edit user">
@@ -195,12 +182,12 @@ const StudentsManagement = () => {
                       <KeyIcon size={16} />
                     </button>
                     {/* Toggle student status button */}
-                    <button onClick={() => handleToggleStatus(student.id)} className="rounded-lg p-2 text-green-600 transition hover:bg-green-50 cursor-pointer" title="Toggle status">
+                    <div className={`rounded-lg p-2 text-green-600 transition hover:bg-green-50 ${updatingStatusIds.includes(student.id) ? 'opacity-50' : ''}`} title="Toggle status">
                       <label className="switch">
-                        <input type="checkbox" checked={student.status === 1} onChange={() => handleToggleStatus(student.id)} />
+                        <input type="checkbox" aria-label={`Active status for ${student.name}`} checked={student.status === 1} disabled={updatingStatusIds.includes(student.id)} onChange={() => handleToggleStatus(student.id)} />
                         <span className="slider round"></span>
                       </label>
-                    </button>
+                    </div>
                   </div>
                 </td>
               </tr>
@@ -254,16 +241,11 @@ const StudentsManagement = () => {
                   <option value="">Select Gender</option>
                   <option value="MALE">Male</option>
                   <option value="FEMALE">Female</option>
-                  <option value="OTHER">Other</option>
                 </select>
               </div>
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">Student ID </label>
                 <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="text" name="student_id" value={formData.student_id} onChange={handleInputChange} />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">Phone Number</label>
-                <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="text" name="phone_number" value={formData.phone_number} onChange={handleInputChange} />
               </div>
               <div className="flex gap-3 pt-4">
                 <button type="button" onClick={() => setShowModal([false, null])} className="flex-1 rounded-lg bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-300 cursor-pointer">Cancel</button>

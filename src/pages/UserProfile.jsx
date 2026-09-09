@@ -85,13 +85,11 @@ const UserProfile = () => {
             <p className="mt-1 text-sm text-slate-500">The personal details associated with your account.</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <DetailItem icon={UserRound} label="Full name" value={displayValue(user?.name)} />
+              <DetailItem icon={CalendarDays} label="ID" value={formatDate(user?.student_id)} />
               <DetailItem icon={AtSign} label="Email address" value={displayValue(user?.email)} />
               <DetailItem icon={UsersRound} label="Role" value={role} />
               {user?.role === 'STUDENT' && <DetailItem icon={Fingerprint} label="Student ID" value={displayValue(user?.student_id)} />}
-              <DetailItem icon={Phone} label="Phone number" value={displayValue(user?.phone_number)} />
-              <DetailItem icon={CalendarDays} label="Date of birth" value={formatDate(user?.date_of_birth)} />
               <DetailItem icon={UserRound} label="Gender" value={displayValue(user?.gender)} />
-              <DetailItem icon={MapPin} label="Address" value={displayValue(user?.address)} wide />
             </div>
           </div>
 

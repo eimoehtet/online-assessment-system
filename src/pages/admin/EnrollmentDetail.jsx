@@ -5,8 +5,7 @@ import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { apiRoutes } from "../../api/routes";
 import Papa from "papaparse";
-import { ChevronDown, ChevronLeft, Download } from "lucide-react";
-import parseDateOfBirth from "../dateFormat";
+import { ChevronDown, ChevronLeft, Download, Trash2 } from "lucide-react";
 import { TableLoadingRow } from '../../components/ui/LoadingIndicator';
 
 const EnrollmentDetail = () => {
@@ -51,8 +50,6 @@ const EnrollmentDetail = () => {
   useEffect(() => {
     const timer = setTimeout(() => fetchEnrollment(currentPage), 300);
     return () => clearTimeout(timer);
-    // fetchEnrollment intentionally remains local so mutation handlers can refresh the current page.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId, currentPage, nameSearch, shiftFilter]);
 
   const handleFileUpload = (event) => {
@@ -72,28 +69,11 @@ const EnrollmentDetail = () => {
 
           for (let i = 0; i < results.data.length; i++) {
             const s = results.data[i];
-            const rawId = s["ID"];
-            const rawName = s["NAME IN LATIN"];
-            const rawDob = s["D.O.B"];
-
-            // Skip empty rows
-            if (!rawId && !rawName && !rawDob) {
-              continue;
-            }
-
-            const dobFormatted = parseDateOfBirth(rawDob);
-            if (!dobFormatted) {
-              errors.push(
-                `Row ${i + 2}: Invalid or missing Date of Birth "${rawDob || ""}" for student "${rawName || rawId || "at row " + (i + 2)}"`,
-              );
-            }
 
             students.push({
-              student_id: rawId,
-              name: rawName,
-              gender: s["Sex"],
-              date_of_birth: new Date(dobFormatted),
-              phone_number: s["Contact"],
+              student_id: s["ID"],
+              name: s["Name"],
+              gender: s["Gender"],
               major: s["Major"],
               role: "STUDENT",
             });
@@ -233,45 +213,57 @@ const EnrollmentDetail = () => {
       </div>
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table className="w-full mb-4">
+        <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-slate-200">
           <thead>
             <tr className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
               <th className="px-4 py-3">No</th>
               <th className="px-4 py-3">Student ID</th>
               <th className="px-4 py-3">Name</th>
+              <th className="px-4 py-3">Gender</th>
               <th className="px-4 py-3">Email</th>
+              <th className="px-4 py-3">Major</th>
               <th className="px-4 py-3">Shift</th>
-              <th className="px-4 py-3">Phone</th>
-              <th className="px-4 py-3">Action</th>
+              <th className="px-4 py-3">Actions</th>
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-slate-100 text-sm text-slate-500">
-            {loading ? <TableLoadingRow colSpan={10} label="Loading enrolled students…" /> : filteredEnrollments?.length === 0 ? <tr><td colSpan="10" className="p-10 text-center text-slate-500">No enrolled students match the current filters.</td></tr> : filteredEnrollments?.map((enroll, index) => (
+          <tbody className="divide-y divide-slate-200 text-sm">
+            {loading ? <TableLoadingRow colSpan={6} label="Loading enrolled students…" /> : filteredEnrollments?.length === 0 ? <tr><td colSpan={6} className="p-10 text-center text-slate-500">No enrolled students match the current filters.</td></tr> : filteredEnrollments?.map((enroll, index) => (
               <tr key={enroll.id} className="hover:bg-slate-50">
-                <td className="whitespace-nowrap px-4 py-4">
+                <td className="whitespace-nowrap px-4 py-4 text-slate-600">
                   {(currentPage - 1) * pageSize + index + 1}
                 </td>
-                <td className="whitespace-nowrap px-4 py-4 ">
+                <td className="whitespace-nowrap px-4 py-4 font-medium text-slate-950">
                   {enroll.student.student_id}
                 </td>
-                <td className="whitespace-nowrap px-4 py-4">
+                <td className="whitespace-nowrap px-4 py-4 font-medium text-slate-950">
                   {enroll.student.name}
                 </td>
-                <td className="whitespace-nowrap px-4 py-4">
+                <td className="whitespace-nowrap px-4 py-4 text-slate-600">
+                  {enroll.student.gender}
+                </td>
+                <td className="whitespace-nowrap px-4 py-4 text-slate-600">
                   {enroll.student.email}
                 </td>
-                <td className="whitespace-nowrap px-4 py-4">
+                <td className="whitespace-nowrap px-4 py-4 text-slate-600">
+                  {enroll.student.major}
+                </td>
+                <td className="whitespace-nowrap px-4 py-4 text-slate-600">
                   <select aria-label={`Shift for ${enroll.student.name}`} value={enroll.shift} onChange={(event) => changeEnrollmentShift(enroll, event.target.value)} className="rounded border border-slate-300 bg-white px-2 py-1"><option value="MORNING">Morning</option><option value="AFTERNOON">Afternoon</option><option value="EVENING">Evening</option></select>
                 </td>
                 <td className="whitespace-nowrap px-4 py-4">
-                  {enroll.student.phone_number}
+                  <div className="flex gap-2">
+                    <button onClick={() => removeEnrollment(enroll.id, enroll.student.name)} className="rounded-lg p-2 text-red-600 transition hover:bg-red-50 cursor-pointer" title="Remove student from course" aria-label={`Remove ${enroll.student.name} from course`}>
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </td>
-                <td className="px-4 py-4"><button onClick={() => removeEnrollment(enroll.id, enroll.student.name)} className="text-sm font-semibold text-red-600 hover:underline">Remove</button></td>
               </tr>
             ))}
           </tbody>
         </table>
+        </div>
         {/* Numbers Pagination Controls */}
         <div className="flex justify-center gap-2 p-4">
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
