@@ -1,22 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import {
-  AtSign, CalendarDays, ChevronRight, Fingerprint, KeyRound,
-  MapPin, Phone, ShieldCheck, UserRound, UsersRound,
+  AtSign, ChevronRight, IdCard, KeyRound,
+  ShieldCheck, UserRound, UsersRound, VenusAndMars,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const displayValue = (value) => {
   if (value === null || value === undefined || String(value).trim() === '') return 'Not provided';
   return String(value);
-};
-
-const formatDate = (value) => {
-  if (!value) return 'Not provided';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return displayValue(value);
-  return new Intl.DateTimeFormat('en', {
-    day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
-  }).format(date);
 };
 
 const formatRole = (role) => role
@@ -85,11 +76,10 @@ const UserProfile = () => {
             <p className="mt-1 text-sm text-slate-500">The personal details associated with your account.</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <DetailItem icon={UserRound} label="Full name" value={displayValue(user?.name)} />
-              <DetailItem icon={CalendarDays} label="ID" value={formatDate(user?.student_id)} />
+              <DetailItem icon={IdCard} label={user?.role === 'STUDENT' ? 'Student ID' : user?.role === 'TEACHER' ? 'Teacher ID' : 'ID'} value={displayValue(user?.student_id)} />
               <DetailItem icon={AtSign} label="Email address" value={displayValue(user?.email)} />
               <DetailItem icon={UsersRound} label="Role" value={role} />
-              {user?.role === 'STUDENT' && <DetailItem icon={Fingerprint} label="Student ID" value={displayValue(user?.student_id)} />}
-              <DetailItem icon={UserRound} label="Gender" value={displayValue(user?.gender)} />
+              <DetailItem icon={VenusAndMars} label="Gender" value={user?.gender ? formatRole(user.gender) : 'Not provided'} />
             </div>
           </div>
 
