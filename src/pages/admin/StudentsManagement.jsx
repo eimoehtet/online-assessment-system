@@ -36,7 +36,6 @@ const StudentsManagement = () => {
     try {
       const response = await apiRoutes.getStudents({ page, search: nameSearch || undefined });
       setStudents(response.data.data || []);
-      console.log('Fetched students:', response.data.data);
       setTotalPages(response.data.meta.totalPages || 1);
       setTotalStudents(response.data.meta.total || 0);
       setCurrentPage(response.data.meta.page || 1);
@@ -81,6 +80,7 @@ const StudentsManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      console.log ("Form data before submit:", formData);
       if (showModal[1]) {
         await apiRoutes.updateUser(showModal[1].id, formData);
         showAlert('Student updated successfully.', { variant: 'success' });
@@ -222,8 +222,16 @@ const StudentsManagement = () => {
                 <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="text" name="name" value={formData.name} onChange={handleInputChange} required />
               </div>
               <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Student ID </label>
+                <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="text" name="student_id" value={formData.student_id} onChange={handleInputChange} required />
+              </div>
+              <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">Email</label>
                 <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="email" name="email" value={formData.email} onChange={handleInputChange} required />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">Major</label>
+                <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="text" name="major" value={formData.major} onChange={handleInputChange} required />
               </div>
              {!showModal[1] &&  <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">Password</label>
@@ -242,10 +250,6 @@ const StudentsManagement = () => {
                   <option value="MALE">Male</option>
                   <option value="FEMALE">Female</option>
                 </select>
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">Student ID </label>
-                <input className="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100" type="text" name="student_id" value={formData.student_id} onChange={handleInputChange} />
               </div>
               <div className="flex gap-3 pt-4">
                 <button type="button" onClick={() => setShowModal([false, null])} className="flex-1 rounded-lg bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-300 cursor-pointer">Cancel</button>
