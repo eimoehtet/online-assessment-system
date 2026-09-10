@@ -163,6 +163,8 @@ const QuizEditor = () => {
     const newQuestions = [...formData.questions];
 
     if (field === 'points') {
+      value = value === '' ? '' : String(Math.max(0, Number(value)));
+
       const proposedTotal = newQuestions.reduce((total, question, questionIndex) => (
         total + (Number(questionIndex === index ? value : question.points) || 0)
       ), 0);

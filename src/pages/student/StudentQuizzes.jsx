@@ -45,6 +45,7 @@ const StudentQuizzes = () => {
   };
 
   const handleQuizAction = (quiz) => {
+    if (quiz.availability === 'ABSENT') return;
     const submission = quiz.latest_submission;
 
     if (quiz.availability === 'COMPLETED') {
@@ -81,7 +82,7 @@ const StudentQuizzes = () => {
           quizzes.map(quiz => {
             const submission = quiz.latest_submission;
             const isDone = quiz.availability === 'COMPLETED';
-            const isUnavailable = ['UPCOMING', 'CLOSED', 'UNAVAILABLE'].includes(quiz.availability);
+            const isUnavailable = ['UPCOMING', 'CLOSED', 'UNAVAILABLE', 'ABSENT'].includes(quiz.availability);
 
             return (
             <div key={quiz.id} className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:flex-row lg:items-center lg:justify-between">
@@ -118,6 +119,8 @@ const StudentQuizzes = () => {
                 {isDone ? <CheckCircle2 size={18} /> : <Play size={18} fill="currentColor" />}
                 {isDone
                   ? 'View Result'
+                  : quiz.availability === 'ABSENT'
+                    ? 'Absent'
                   : quiz.availability === 'UPCOMING'
                     ? `Opens ${format(new Date(quiz.start_date), 'PPp')}`
                   : quiz.availability === 'CLOSED'
