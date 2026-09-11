@@ -1,3 +1,4 @@
+import { trackRapidAnswerChange } from '../../lib/rapidAnswerChanges';
 import Alert from '../../components/ui/Alert';
 import { confirmAlert } from '../../lib/alerts';
 import { showAlert } from '../../lib/alerts';
@@ -32,6 +33,8 @@ const QuizTake = () => {
   const timeoutSubmitStarted = useRef(false);
   const answerSaveTimers = useRef(new Map());
   const answerSaveQueues = useRef(new Map());
+  const rapidChanges = useRef(new Map());
+  const latestAnswers = useRef({});
 
   const fetchQuizData = useCallback(async () => {
     try {
@@ -52,6 +55,8 @@ const QuizTake = () => {
         existingAnswers[a.question_id] = a.student_answer;
       });
       setAnswers(existingAnswers);
+      latestAnswers.current = existingAnswers;
+      rapidChanges.current.clear();
 
       // The attempt ends at the quiz deadline or when its optional duration
       // expires, whichever happens first.
@@ -149,6 +154,10 @@ const QuizTake = () => {
   }, [submissionId]);
 
   const handleAnswerChange = (questionId, value) => {
+    const metadata = trackRapidAnswerChange(rapidChanges.current,
+      questions.find(q => q.id === questionId), latestAnswers.current[questionId], value, getCurrentTimestamp());
+    latestAnswers.current[questionId] = value;
+    if (metadata) logBehavior('RAPID_ANSWER_CHANGE', metadata, questionId);
     setAnswers(prev => ({ ...prev, [questionId]: value }));
 
     // Debouncing prevents older keystroke requests from overwriting the latest text.
@@ -267,9 +276,14 @@ const QuizTake = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className={`flex items-center gap-2 text-xl font-bold ${timeLeft < 60 ? 'text-red-500' : 'text-slate-950'}`}>
+          <div className={`flex items-center gap-2 ${timeLeft < 60 ? 'text-red-500' : 'text-slate-950'}`}>
             <Clock size={20} />
-            <span>{formatTime(timeLeft)}</span>
+            {quiz.time_limit == null ? (
+              <div className="text-right">
+                <p className="text-sm font-semibold">{timeLeft < 60 ? `Closes in ${formatTime(timeLeft)}` : 'No time limit'}</p>
+                <p className="text-xs text-slate-500">Closes {new Date(quiz.end_date).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}</p>
+              </div>
+            ) : <span className="text-xl font-bold">{formatTime(timeLeft)}</span>}
           </div>
           <button onClick={enterFullscreen} className="inline-flex size-10 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100" title="Enter Fullscreen">
             <Maximize2 size={20} />

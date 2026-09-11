@@ -1,3 +1,4 @@
+import { createEditorAutosave } from '../../lib/editorAutosave';
 import { validateQuiz } from '../../lib/quizValidation';
 import Alert from '../../components/ui/Alert';
 import { showAlert } from '../../lib/alerts';
@@ -51,7 +52,11 @@ const QuizEditor = () => {
   const savedQuizId = useRef(id);
   const saveInProgress = useRef(false);
 
-  const [loading, setLoading] = useState(isEditing);
+  const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [autosaveStatus, setAutosaveStatus] = useState('');
+  const autosaver = useRef(null);
+  const currentForm = useRef(null);
   const [courses, setCourses] = useState([]);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -61,7 +66,7 @@ const QuizEditor = () => {
   const teacher_id = user?.id;
 
   // Unified state for Quiz and Questions
-  const [formData, setFormData] = useState({
+  const [formData, updateFormData] = useState({
     title: '',
     course_id: '',
     end_date: '',
@@ -71,43 +76,73 @@ const QuizEditor = () => {
     questions: []
   });
 
+  const setFormData = (change) => {
+    const next = typeof change === 'function' ? change(structuredClone(currentForm.current)) : change;
+    currentForm.current = next;
+    updateFormData(next);
+    autosaver.current?.update({ formData: next, quizId: savedQuizId.current || null });
+  };
+
   useEffect(() => {
-    fetchInitialData();
-  }, [id]);
-
-  const fetchInitialData = async () => {
-    try {
-      const coursesRes = await apiRoutes.getCourseByTeacherId(teacher_id, { limit: 100 });
-      setCourses(coursesRes.data.courses || []);
-
-      if (isEditing) {
-        const [quizRes, questionsRes] = await Promise.all([
-          apiRoutes.getQuizById(id),
-          apiRoutes.getQuestions(id)
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const [coursesRes, draftRes, quizRes, questionsRes] = await Promise.all([
+          apiRoutes.getCourseByTeacherId(teacher_id, { limit: 100 }),
+          apiRoutes.getQuizDraft(id || 'new'),
+          id ? apiRoutes.getQuizById(id) : null,
+          id ? apiRoutes.getQuestions(id) : null,
         ]);
-        
-        const quiz = quizRes.data;
-        setFormData({
-          title: quiz.title,
-          course_id: quiz.course_id,
+        if (cancelled) return;
+        setCourses(coursesRes.data.courses || []);
+        const quiz = quizRes?.data;
+        const base = quiz ? {
+          title: quiz.title, course_id: quiz.course_id,
           end_date: quiz.end_date ? toLocalDateTimeInput(quiz.end_date) : '',
-          time_limit: quiz.time_limit ?? '',
-          allowed_attempts: quiz.allowed_attempts,
-          status: quiz.status,
-          questions: questionsRes.data.map(q => ({
-            ...q,
-            // Ensure options have necessary fields if coming from backend
-            options: q.question_type === 'TRUE_FALSE'
-              ? normalizeTrueFalseOptions(q.options)
-              : (q.options || [])
-          }))
+          time_limit: quiz.time_limit ?? '', allowed_attempts: quiz.allowed_attempts, status: quiz.status,
+          questions: questionsRes.data.map(q => ({ ...q, options: q.question_type === 'TRUE_FALSE' ? normalizeTrueFalseOptions(q.options) : (q.options || []) })),
+        } : { title: '', course_id: '', end_date: '', time_limit: '', allowed_attempts: 1, status: 'DRAFT', questions: [] };
+        const payload = draftRes.data.payload || { formData: base, quizId: id || null };
+        savedQuizId.current = payload.quizId || id;
+        currentForm.current = payload.formData;
+        updateFormData(payload.formData);
+        autosaver.current = createEditorAutosave({
+          initial: payload, version: draftRes.data.version,
+          save: async (draft, version) => (await apiRoutes.saveQuizDraft(id || 'new', draft, version)).data,
+          onStatus: status => { if (!cancelled) setAutosaveStatus(status); },
         });
-      }
-    } catch {
-      setError('Failed to load data');
-    } finally {
-      setLoading(false);
-    }
+        setAutosaveStatus(draftRes.data.payload ? 'Restored draft saved on the server' : 'Changes will autosave as a server draft');
+      } catch (err) {
+        if (!cancelled) {
+          setLoadFailed(true);
+          setError(err?.response?.data?.message || 'Could not load the editor draft. Reload before editing.');
+        }
+      } finally { if (!cancelled) setLoading(false); }
+    };
+    load();
+    const warn = event => {
+      if (autosaver.current?.dirty || saveInProgress.current) { event.preventDefault(); event.returnValue = ''; }
+    };
+    const online = () => { autosaver.current?.flush().catch(() => {}); };
+    window.addEventListener('beforeunload', warn);
+    window.addEventListener('online', online);
+    return () => {
+      cancelled = true;
+      const saver = autosaver.current;
+      saver?.pause();
+      saver?.flush().catch(() => {}).finally(() => saver.dispose());
+      window.removeEventListener('beforeunload', warn);
+      window.removeEventListener('online', online);
+    };
+  }, [id, teacher_id]);
+
+  const leaveEditor = async () => {
+    if (saveInProgress.current) return;
+    saveInProgress.current = true;
+    setSaving(true);
+    try { await autosaver.current?.flush(); navigate('/teacher/quizzes'); }
+    catch { setError('Could not save your draft. Please keep this page open and try again.'); }
+    finally { saveInProgress.current = false; setSaving(false); }
   };
 
   const handleQuizChange = (e) => {
@@ -160,7 +195,7 @@ const QuizEditor = () => {
   };
 
   const handleQuestionChange = (index, field, value) => {
-    const newQuestions = [...formData.questions];
+    const newQuestions = structuredClone(formData.questions);
 
     if (field === 'points') {
       value = value === '' ? '' : String(Math.max(0, Number(value)));
@@ -193,7 +228,7 @@ const QuizEditor = () => {
   };
 
   const handleOptionChange = (qIndex, oIndex, field, value) => {
-    const newQuestions = [...formData.questions];
+    const newQuestions = structuredClone(formData.questions);
     const newOptions = [...newQuestions[qIndex].options];
     newOptions[oIndex] = { ...newOptions[oIndex], [field]: value };
 
@@ -209,7 +244,7 @@ const QuizEditor = () => {
   };
 
   const addOption = (qIndex) => {
-    const newQuestions = [...formData.questions];
+    const newQuestions = structuredClone(formData.questions);
     newQuestions[qIndex].options.push({
       option_text: '',
       is_correct: false,
@@ -219,14 +254,14 @@ const QuizEditor = () => {
   };
 
   const removeOption = (qIndex, oIndex) => {
-    const newQuestions = [...formData.questions];
+    const newQuestions = structuredClone(formData.questions);
     newQuestions[qIndex].options = newQuestions[qIndex].options.filter((_, i) => i !== oIndex);
     setFormData(prev => ({ ...prev, questions: newQuestions }));
   };
 
   const moveQuestion = (index, direction) => {
     if ((index === 0 && direction === -1) || (index === formData.questions.length - 1 && direction === 1)) return;
-    const newQuestions = [...formData.questions];
+    const newQuestions = structuredClone(formData.questions);
     const targetIndex = index + direction;
     [newQuestions[index], newQuestions[targetIndex]] = [newQuestions[targetIndex], newQuestions[index]];
     
@@ -272,6 +307,8 @@ const QuizEditor = () => {
     setError('');
 
     try {
+      autosaver.current.pause();
+      await autosaver.current.flush();
       const quizPayload = {
         title: formData.title,
         course_id: parseInt(formData.course_id),
@@ -289,6 +326,8 @@ const QuizEditor = () => {
         const res = await apiRoutes.createQuiz(quizPayload);
         quizId = res.data.id;
         savedQuizId.current = quizId;
+        autosaver.current.update({ formData: currentForm.current, quizId });
+        await autosaver.current.flush();
       }
 
       // Get existing questions to know which ones to delete
@@ -324,9 +363,13 @@ const QuizEditor = () => {
             ...current,
             questions: current.questions.map((question, index) => index === i ? { ...question, id: response.data.id } : question),
           }));
+          await autosaver.current.flush();
         }
       }
 
+      await autosaver.current.flush();
+      await apiRoutes.clearQuizDraft(id || 'new', autosaver.current.version);
+      autosaver.current.dispose();
       showAlert('Quiz and all questions saved successfully!', { variant: 'success' });
       navigate('/teacher/quizzes');
     } catch (err) {
@@ -335,6 +378,7 @@ const QuizEditor = () => {
         ? `The quiz was saved, but some changes could not be saved. Retry Save All Changes to update the same quiz. ${reason}`
         : `Could not save the quiz. ${reason}`);
     } finally {
+      autosaver.current?.resume();
       saveInProgress.current = false;
       setSaving(false);
     }
@@ -346,7 +390,7 @@ const QuizEditor = () => {
     <div className="mx-auto max-w-7xl pb-24">
       <header className="sticky top-16 z-20 mb-8 flex flex-col gap-4 border-b border-slate-200 bg-slate-50/95 py-4 backdrop-blur md:top-0 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex min-w-0 items-center gap-3">
-          <button onClick={() => navigate('/teacher/quizzes')} className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-200" title="Back to quizzes">
+          <button disabled={saving} onClick={leaveEditor} className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-200" title="Back to quizzes">
             <ArrowLeft size={24} />
           </button>
           <h1 className="truncate text-2xl font-bold tracking-tight text-slate-950">{isEditing ? `Editing Quiz: ${formData.title}` : 'Create New Quiz'}</h1>
@@ -354,14 +398,14 @@ const QuizEditor = () => {
         <div className="flex gap-3">
           <button
             type="button"
-            onClick={() => navigate('/teacher/quizzes')}
+            disabled={saving} onClick={leaveEditor}
             className="rounded-lg bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-300 cursor-pointer"
           >
-            Cancel
+            Back to quizzes
           </button>
           <button
             onClick={handleSubmit}
-            disabled={saving}
+            disabled={saving || loadFailed}
             className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Save size={18} />
@@ -370,9 +414,10 @@ const QuizEditor = () => {
         </div>
       </header>
 
+      <p role="status" className="mb-4 text-sm text-slate-600">{autosaveStatus}. Autosave keeps a draft; Save All Changes applies it to the quiz.</p>
       {error && <Alert className="mb-4">{error}</Alert>}
 
-      <fieldset disabled={saving} className="grid min-w-0 items-start gap-8 lg:grid-cols-[22rem_1fr]">
+      <fieldset disabled={saving || loadFailed} className="grid min-w-0 items-start gap-8 lg:grid-cols-[22rem_1fr]">
         {/* Sidebar: Quiz Details */}
         <aside className="space-y-4 lg:sticky lg:top-24">
           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -590,4 +635,9 @@ const QuizEditor = () => {
   );
 };
 
-export default QuizEditor;
+const QuizEditorPage = () => {
+  const { id } = useParams();
+  const { user } = useAuth();
+  return <QuizEditor key={`${user?.id}:${id || 'new'}`} />;
+};
+export default QuizEditorPage;

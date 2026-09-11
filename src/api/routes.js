@@ -35,6 +35,9 @@ export const apiRoutes = {
   toggleCourseStatus: (id) => apiClient.post(`/courses/${id}/toggle-status`),
 
   // Quizzes
+  getQuizDraft: (key) => apiClient.get(`/quizzes/editor-drafts/${key}`),
+  saveQuizDraft: (key, payload, version) => apiClient.put(`/quizzes/editor-drafts/${key}`, { payload, version }),
+  clearQuizDraft: (key, version) => apiClient.delete(`/quizzes/editor-drafts/${key}`, { data: { version } }),
   getQuizzes: (params) => apiClient.get("/quizzes", { params }),
   getQuizById: (id) => apiClient.get(`/quizzes/${id}`),
   getQuizzesByTeacherId: (teacherId, params) => apiClient.get(`/quizzes/teacher/${teacherId}`, { params }),
