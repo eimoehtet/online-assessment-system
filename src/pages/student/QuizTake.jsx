@@ -281,7 +281,6 @@ const QuizTake = () => {
             {quiz.time_limit == null ? (
               <div className="text-right">
                 <p className="text-sm font-semibold">{timeLeft < 60 ? `Closes in ${formatTime(timeLeft)}` : 'No time limit'}</p>
-                <p className="text-xs text-slate-500">Closes {new Date(quiz.end_date).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}</p>
               </div>
             ) : <span className="text-xl font-bold">{formatTime(timeLeft)}</span>}
           </div>
