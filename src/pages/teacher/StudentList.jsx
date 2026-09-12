@@ -67,6 +67,7 @@ const StudentList = () => {
     try {
       await apiRoutes.updateQuizAttendance({ quiz_id: quizId, student_id, status });
       await Promise.all([fetchStudents(currentPage), getAttendance(quizId)]);
+      showAlert('Attendance status updated successfully', { variant: 'success' });
     } catch {
       showAlert('Failed to toggle user status', { variant: 'error' });
     };
@@ -109,20 +110,24 @@ const mergedStudents = students.map(student => {
           <thead>
             <tr className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
               <th className="px-4 py-3">No</th>
+              <th className="px-4 py-3">Student ID</th>
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3">Student ID</th>
-              <th className="px-4 py-3">Actions</th>
+              <th className="px-4 py-3">Gender</th>
+              <th className="px-4 py-3">Major</th>
+              <th className="px-4 py-3 flex items-center justify-center">Attendance</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 text-sm">
-            {loading ? <TableLoadingRow colSpan={5} label="Loading students…" /> : filteredStudents.map(student => (
+            {loading ? <TableLoadingRow colSpan={7} label="Loading students…" /> : filteredStudents.map(student => (
               <tr key={student.id} className="hover:bg-slate-50">
                 <td className="whitespace-nowrap px-4 py-4 text-slate-600">{mergedStudents.indexOf(student) + 1}</td>
+                <td className="whitespace-nowrap px-4 py-4 font-medium text-slate-950">{student.student.student_id || '-'}</td>
                 <td className="whitespace-nowrap px-4 py-4 font-medium text-slate-950">{student.student.name}</td>
                 <td className="whitespace-nowrap px-4 py-4 text-slate-600">{student.student.email}</td>
-                <td className="whitespace-nowrap px-4 py-4 text-slate-600">{student.student.student_id || '-'}</td>
-                <td className="whitespace-nowrap px-4 py-4">
+                <td className="whitespace-nowrap px-4 py-4 text-slate-600">{student.student.gender || '-'}</td>
+                <td className="whitespace-nowrap px-4 py-4 text-slate-600">{student.student.major || '-'}</td>
+                <td className="whitespace-nowrap px-4 py-4 flex items-center justify-center">
                   <div className="flex gap-2">
                     {/* Checkbox */}
                     <button title="Toggle status">
