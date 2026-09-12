@@ -119,9 +119,9 @@ const mergedStudents = students.map(student => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 text-sm">
-            {loading ? <TableLoadingRow colSpan={7} label="Loading students…" /> : filteredStudents.map(student => (
+            {loading ? <TableLoadingRow colSpan={7} label="Loading students…" /> : filteredStudents.map((student, index) => (
               <tr key={student.id} className="hover:bg-slate-50">
-                <td className="whitespace-nowrap px-4 py-4 text-slate-600">{mergedStudents.indexOf(student) + 1}</td>
+                <td className="whitespace-nowrap px-4 py-4 text-slate-600">{(currentPage - 1) * 10 + index + 1}</td>
                 <td className="whitespace-nowrap px-4 py-4 font-medium text-slate-950">{student.student.student_id || '-'}</td>
                 <td className="whitespace-nowrap px-4 py-4 font-medium text-slate-950">{student.student.name}</td>
                 <td className="whitespace-nowrap px-4 py-4 text-slate-600">{student.student.email}</td>
